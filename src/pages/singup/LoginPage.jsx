@@ -1,37 +1,61 @@
-/* src/pages/LoginPage.jsx */
+// src/pages/LoginPage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  useMsal,
+  UnauthenticatedTemplate
+} from '@azure/msal-react';
+import { loginRequest } from '../../auth/auth-config';
 import InputBox from '../../components/InputBox';
+import Button from '../../components/Button';
 import cafeImg from '../../assets/cafe.png';
 import emailIcon from '../../assets/correo-electronico.png';
 import lockIcon from '../../assets/bloqueo-alternativo.png';
-import msIcon from '../../assets/microsoft365.jpeg';
+import { Link } from 'react-router-dom';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const { instance } = useMsal();
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Aquí implementa tu lógica de validación si la necesitas
     navigate('/map');
+  };
+
+  const handleMsLogin = () => {
+    instance
+      .loginRedirect({
+        ...loginRequest,
+        prompt: 'create',
+      })
+      .catch((error) => console.error(error));
   };
 
   return (
     <main className="flex flex-grow flex-col items-center justify-center min-h-screen p-6 bg-[#FBFBFA]">
-      {/* Header: Logo and Title */}
+      {/* Header */}
       <header className="flex flex-col items-center mb-8">
         <figure className="flex items-center justify-center w-28 h-28 sm:w-32 sm:h-32 lg:w-36 lg:h-36 bg-[#515AFF] border border-[#F0F0F0] shadow-md rounded-full">
-          <img src={cafeImg} alt="Logo" className="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28" />
-          <figcaption className="sr-only">Logo de la aplicación</figcaption>
+          <img
+            src={cafeImg}
+            alt="Logo de la aplicación"
+            className="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28"
+          />
         </figure>
         <h1 className="font-paprika text-2xl sm:text-3xl md:text-4xl leading-tight text-center text-black mt-4">
           Iniciar sesión
         </h1>
       </header>
 
-      {/* Login Form */}
-      <form onSubmit={handleSubmit} className="w-full max-w-xs sm:max-w-sm lg:max-w-md flex flex-col gap-4">
+      {/* Formulario Email/Password */}
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-xs sm:max-w-sm lg:max-w-md flex flex-col gap-4"
+      >
         <div>
           <label htmlFor="email" className="sr-only">
             Correo electrónico
@@ -60,53 +84,42 @@ export default function LoginPage() {
           />
         </div>
 
-        <button
-          type="submit"
-          className="w-full py-3 bg-[#0E2F55] border border-[#E2E8F0] shadow hover:shadow-lg rounded-lg text-white font-paprika text-base sm:text-lg transition"
-        >
-          Iniciar sesión
-        </button>
+        <Button
+          color="bg-[#0E2F55] text-white"
+          text="Iniciar sesión"
+          onClick={handleSubmit}
+        />
       </form>
 
-      {/* Alternative Login Methods */}
-      <section aria-labelledby="alternative-login" className="mt-8 text-center">
-        <h2 id="alternative-login" className="sr-only">
-          Otras formas de inicio de sesión
-        </h2>
-        <button
-          onClick={() => {/* TODO: MS auth */}}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow hover:bg-gray-100 transition"
-          aria-label="Iniciar sesión con Microsoft 365"
-        >
-          <img src={msIcon} alt="" className="w-6 h-6 mr-2" />
-          <span className="font-paprika text-sm sm:text-base text-black">
-            Microsoft 365
-          </span>
-        </button>
+      {/* Login con Microsoft */}
+      <section className="mt-8 text-center">
+        <UnauthenticatedTemplate>
+          <Button
+            color="bg-white text-black border-gray-300"
+            text="Microsoft 365"
+            onClick={handleMsLogin}
+          />
+        </UnauthenticatedTemplate>
       </section>
 
-      {/* Footer Links */}
+      {/* Footer */}
       <footer className="mt-6 space-y-2 text-center">
-        <p>
-          <a
-            href="#"
-            onClick={() => navigate('/forgot')}
-            className="font-paprika text-sm sm:text-base text-[#0E2F55] underline"
-          >
-            ¿Olvidaste la contraseña?
-          </a>
-        </p>
+        <Link
+          to="/forgot"
+          className="font-paprika text-sm sm:text-base text-[#0E2F55] underline cursor-pointer"
+        >
+          ¿Olvidaste la contraseña?
+        </Link>
         <p className="font-paprika text-sm sm:text-base">
           ¿No tienes una cuenta?{' '}
-          <a
-            href="#"
-            onClick={() => navigate('/register')}
-            className="text-[#0E2F55] underline"
+          <Link
+            to="/register"
+            className="text-[#0E2F55] underline cursor-pointer"
           >
             Regístrate
-          </a>
+          </Link>
         </p>
       </footer>
     </main>
-  );
+);
 }

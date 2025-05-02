@@ -10,19 +10,18 @@ import { LogLevel } from '@azure/msal-browser';
 * For a full list of MSAL.js configuration parameters, visit:
 * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/configuration.md 
 */
-
 export const msalConfig = {
     auth: {
-        clientId: 'Enter_the_Application_Id_Here',
-        authority: 'https://login.microsoftonline.com/<tenant>/',
-        redirectUri: 'http://localhost:5173/Shopping-Application-Web/redirect',
-        postLogoutRedirectUri: '/',
-        navigateToLoginRequestUrl: false,
+      clientId: 'TU_CLIENT_ID',
+      authority: 'https://login.microsoftonline.com/TU_TENANT_ID/',
+      redirectUri: window.location.origin + '/redirect',      // ← así no hardcodeas localhost
+      postLogoutRedirectUri: window.location.origin + '/',
+      navigateToLoginRequestUrl: false,
     },
-   cache: {
-       cacheLocation: 'sessionStorage', // Configures cache location. "sessionStorage" is more secure, but "localStorage" gives you SSO between tabs.
-       storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
-   },
+    cache: {
+      cacheLocation: 'sessionStorage',
+      storeAuthStateInCookie: false,
+    },
    system: {
        loggerOptions: {
            loggerCallback: (level, message, containsPii) => {

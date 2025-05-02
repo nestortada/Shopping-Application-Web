@@ -6,7 +6,7 @@ import App from '../../App';
 import { msalConfig } from '../auth-config';
 
 export const AuthProvider = ({ children }) => {
-  const msalInstance = new PublicClientApplication(msalConfig);
+  const msalInstance = new PublicClientApplication(msalConfig)
 
   // Default to using the first account if no account is active on page load
   const accounts = msalInstance.getAllAccounts();
