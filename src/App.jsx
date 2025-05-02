@@ -10,6 +10,7 @@ import { twMerge } from 'tailwind-merge';
 import { routes } from './config/routes';
 import { BackgroundProvider, useBackground } from './context/BackgroundContext';
 import RedirectHandler from './pages/RedirectHandler';
+import {Navigate} from 'react-router-dom';
 
 function AppContent() {
   const { backgroundColor, updateBackgroundColor } = useBackground();
@@ -32,6 +33,7 @@ function AppContent() {
             />
           ))}
           <Route path="/redirect" element={<RedirectHandler />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>
