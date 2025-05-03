@@ -19,10 +19,17 @@ async function startServer() {
 
   // Configuración de CORS
   app.use(cors({
-    origin: [
-      'http://localhost:5173', // Desarrollo local
-      'https://shopping-application-web.vercel.app' // Frontend en Vercel
-    ],
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        'http://localhost:5173', // Desarrollo local
+        'https://shopping-application-web.vercel.app' // Frontend en Vercel
+      ];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('No permitido por CORS'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true, // Permitir cookies y encabezados de autenticación
     allowedHeaders: ['Content-Type', 'Authorization'], // Permitir encabezados específicos
