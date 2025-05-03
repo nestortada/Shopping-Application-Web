@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "vite",
-    "dev:server": "nodemon server.js",
+    "dev:server": "nodemon --watch server.js --exec \"node server.js\"",
     "build": "vite build",
     "lint": "eslint .",
     "start": "node server.js",
@@ -20,7 +20,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "mongoose": "^8.14.1",
+    "mongodb": "^6.16.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.5.3",
