@@ -17,14 +17,15 @@ async function startServer() {
 
   const db = client.db('Aplication-web');
 
-  // CORS para localhost y tu front en Vercel
+  // Configuración de CORS
   app.use(cors({
     origin: [
-      'http://localhost:5173',
-      'https://shopping-application-web.vercel.app'
+      'http://localhost:5173', // Desarrollo local
+      'https://shopping-application-web.vercel.app' // Frontend en Vercel
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true
+    credentials: true, // Permitir cookies y encabezados de autenticación
+    allowedHeaders: ['Content-Type', 'Authorization'], // Permitir encabezados específicos
   }));
 
   app.use(express.json());
