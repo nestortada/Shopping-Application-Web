@@ -16,15 +16,14 @@ const allowedOrigins = process.env.FRONTEND_URLS
 
 app.use(cors({
   origin: (origin, callback) => {
-    // origin === undefined ocurre en herramientas como Postman
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
     callback(new Error(`CORS: Origen ${origin} no permitido`));
   },
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
-  allowedHeaders: ['Content-Type','Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
