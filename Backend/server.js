@@ -31,7 +31,7 @@ async function startServer() {
   // ← Aquí NUNCA una URL absoluta, sólo ruta relativa
   app.use('/api/v1/auth', authRoutes(db));
 
-  const PORT = process.env.PORT || 5000;
+  const PORT = process.env.PORT || 5001; // Cambia 5000 por 5001 o cualquier otro puerto disponible
   app.listen(PORT, () => console.log(`🚀 API escuchando en puerto ${PORT}`));
 }
 

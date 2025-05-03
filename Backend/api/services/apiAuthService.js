@@ -2,7 +2,7 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 export async function registerApi({ email, password }) {
-  const res = await fetch(`${API_URL}/register`, {
+  const res = await fetch(`${API_URL}/auth/register`, { // Agrega "/auth"
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
