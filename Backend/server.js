@@ -6,44 +6,42 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 import authRoutes from './api/routes/auth.js';
 
 dotenv.config();
-
 const app = express();
 
-// Cargar orígenes permitidos desde .env (separados por coma)
+// Cargamos los orígenes permitidos desde FRONTEND_URLS
 const allowedOrigins = process.env.FRONTEND_URLS
-  ? process.env.FRONTEND_URLS.split(',').map(u => u.trim())
-  : [];
+  .split(',')
+  .map(u => u.trim());
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Para herramientas sin origin (p.ej. Postman)
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    callback(new Error(`CORS: Origen ${origin} no permitido`));
+    callback(new Error(`CORS: origen ${origin} no permitido`));
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type','Authorization']
 }));
 
 app.use(express.json());
 
 async function startServer() {
   const client = new MongoClient(process.env.MONGO_URI, {
-    serverApi: { version: ServerApiVersion.v1, strict: true, deprecationErrors: true }
+    serverApi: { version: ServerApiVersion.v1 }
   });
   await client.connect();
   console.log('✅ MongoDB Atlas conectado');
 
-  const db = client.db(process.env.DB_NAME || 'Aplication-web');
-
-  // Rutas de autenticación
+  const db = client.db(process.env.DB_NAME);
   app.use('/api/v1/auth', authRoutes(db));
 
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
-  });
+  app.listen(PORT, () =>
+    console.log(`✅ Servidor corriendo en puerto ${PORT}`)
+  );
 }
 
 startServer().catch(err => {
@@ -51,5 +49,4 @@ startServer().catch(err => {
   process.exit(1);
 });
 
-// Para despliegues serverless como Vercel
 export default app;
