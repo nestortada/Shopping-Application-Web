@@ -32,6 +32,11 @@ async function startServer() {
 
   // Rutas
   app.use('/api/v1/auth', authRoutes(db));
+
+  const PORT = process.env.PORT || 5000;      // o el puerto que prefieras  
+  app.listen(PORT, () => {
+    console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  });
 }
 
 // Llama a la función para inicializar el servidor
@@ -39,6 +44,7 @@ startServer().catch(err => {
   console.error('❌ Error al iniciar el servidor:', err.message);
   process.exit(1);
 });
+
 
 // Exporta el servidor para que Vercel lo use
 export default app;
