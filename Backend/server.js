@@ -1,3 +1,4 @@
+// server.js
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -8,6 +9,26 @@ dotenv.config();
 
 const app = express();
 
+// Cargar orígenes permitidos desde .env (separados por coma)
+const allowedOrigins = process.env.FRONTEND_URLS
+  ? process.env.FRONTEND_URLS.split(',').map(u => u.trim())
+  : [];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // origin === undefined ocurre en herramientas como Postman
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS: Origen ${origin} no permitido`));
+  },
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type','Authorization']
+}));
+
+app.use(express.json());
+
 async function startServer() {
   const client = new MongoClient(process.env.MONGO_URI, {
     serverApi: { version: ServerApiVersion.v1, strict: true, deprecationErrors: true }
@@ -15,43 +36,21 @@ async function startServer() {
   await client.connect();
   console.log('✅ MongoDB Atlas conectado');
 
-  const db = client.db('Aplication-web');
+  const db = client.db(process.env.DB_NAME || 'Aplication-web');
 
-  // Configuración de CORS
-  app.use(cors({
-    origin: (origin, callback) => {
-      const allowedOrigins = [
-        'http://localhost:5173', // Desarrollo local
-        'https://shopping-application-web.vercel.app' // Frontend en Vercel
-      ];
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('No permitido por CORS'));
-      }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true, // Permitir cookies y encabezados de autenticación
-    allowedHeaders: ['Content-Type', 'Authorization'], // Permitir encabezados específicos
-  }));
-
-  app.use(express.json());
-
-  // Rutas
+  // Rutas de autenticación
   app.use('/api/v1/auth', authRoutes(db));
 
-  const PORT = process.env.PORT || 5000;      // o el puerto que prefieras  
+  const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
   });
 }
 
-// Llama a la función para inicializar el servidor
 startServer().catch(err => {
   console.error('❌ Error al iniciar el servidor:', err.message);
   process.exit(1);
 });
 
-
-// Exporta el servidor para que Vercel lo use
+// Para despliegues serverless como Vercel
 export default app;

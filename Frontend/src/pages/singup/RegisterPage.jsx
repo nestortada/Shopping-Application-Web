@@ -9,29 +9,33 @@ import { routes } from '../../config/routes';
 import emailIcon from '../../assets/correo-electronico.png';
 import lockIcon from '../../assets/bloqueo-alternativo.png';
 
+
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const [email, setEmail]           = useState('');
-  const [password, setPassword]     = useState('');
-  const [error, setError]           = useState('');
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
+  const [error, setError]             = useState('');
   const [emailExists, setEmailExists] = useState(false);
-  const [checking, setChecking]     = useState(false);
-  const [showModal, setShowModal]   = useState(false);
+  const [checking, setChecking]       = useState(false);
+  const [showModal, setShowModal]     = useState(false);
 
   const loginPath = routes.find(r => r.id === 'login')?.path || '/';
 
-  // 1) Cada vez que el usuario sale del campo email:
+  // Base URL de la API desde .env (VITE_API_URL)
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  // Verifica si el email ya existe
   const handleEmailBlur = async () => {
     if (!email) return;
     setChecking(true);
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/check-email?email=${encodeURIComponent(email)}`
+        // Se añadió "/auth" antes de "check-email"
+        `${API_URL}/auth/check-email?email=${encodeURIComponent(email)}`
       );
       const { exists } = await res.json();
       setEmailExists(exists);
     } catch {
-      // no bloqueamos registro si falla la verificación
       setEmailExists(false);
     } finally {
       setChecking(false);
@@ -42,13 +46,13 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    // 2) Impedir submit si ya existe
     if (emailExists) {
       setError('Este correo ya está registrado. Usa otro por favor.');
       return;
     }
 
     try {
+      // registerApi ya hace fetch(`${API_URL}/auth/register`, …)
       await registerApi({ email, password });
       setShowModal(true);
     } catch (err) {
@@ -82,7 +86,7 @@ export default function RegisterPage() {
           <p className="text-red-500 text-sm">
             Este correo ya está registrado.
           </p>
-        ) }
+        )}
 
         <InputBox
           id="password"
@@ -110,5 +114,5 @@ export default function RegisterPage() {
 
       {showModal && <SuccessModal onClose={handleModalClose} />}
     </main>
-  );
+);
 }
