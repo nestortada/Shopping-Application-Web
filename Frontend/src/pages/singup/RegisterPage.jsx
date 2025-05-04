@@ -1,7 +1,7 @@
 /* src/pages/RegisterPage.jsx */
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { registerApi } from '../../../../Backend/api/services/apiAuthService';
+import { registerApi } from '../../services/apiAuthService';
 import InputBox from '../../components/InputBox';
 import Button from '../../components/Button';
 import SuccessModal from '../../components/SuccessModal';

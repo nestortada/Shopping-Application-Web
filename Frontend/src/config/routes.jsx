@@ -1,5 +1,5 @@
 import LoginPage from '../pages/singup/LoginPage';
-import MapPage from '../pages/singup/MapPage';
+import MapPage from '../pages/Client/Map/MapPage';
 import ForgotPage from '../pages/singup/ForgotPage';
 import RegisterPage from '../pages/singup/RegisterPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
