@@ -13,6 +13,7 @@
   "dependencies": {
     "@azure/msal-browser": "^4.11.1",
     "@azure/msal-react": "^3.0.11",
+    "@emailjs/browser": "^4.4.1",
     "@tailwindcss/vite": "^4.1.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
