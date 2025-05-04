@@ -1,6 +1,6 @@
 /* src/services/authService.js */
 export async function register({ email, password, role }) {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}${import.meta.env.VITE_API_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password, role }),
@@ -15,7 +15,7 @@ export async function register({ email, password, role }) {
 }
 
 export async function login({ email, password }) {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}${import.meta.env.VITE_API_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -31,7 +31,7 @@ export async function login({ email, password }) {
 
 export async function getUserProfile() {
   const token = localStorage.getItem('token');
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}${import.meta.env.VITE_API_URL}/auth/me`, {
     method: 'GET',
     headers: { 'Authorization': `Bearer ${token}` },
   });
@@ -45,7 +45,7 @@ export async function getUserProfile() {
 
 export async function updateUserRole({ email, role }) {
   const token = localStorage.getItem('token');
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/update-role`, {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}${import.meta.env.VITE_API_URL}/auth/update-role`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
