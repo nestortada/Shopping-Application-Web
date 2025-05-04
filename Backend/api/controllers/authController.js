@@ -153,8 +153,11 @@ export async function forgotPassword(req, res, next, db) {
       }
     );
 
-    const frontendBase = process.env.FRONTEND_URLS.split(',')[0];
-    const resetLink = `${frontendBase}/reset-password?token=${resetToken}`;
+    // Determinar qué URL del frontend usar basado en el origen de la petición
+    const frontendUrls = process.env.FRONTEND_URLS.split(',').map(url => url.trim());
+    const origin = req.headers.origin;
+    const baseUrl = frontendUrls.includes(origin) ? origin : frontendUrls[frontendUrls.length - 1]; // Usa la última URL (producción) como fallback
+    const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
 
     return res.status(200).json({
       message: 'Token generado con éxito',
