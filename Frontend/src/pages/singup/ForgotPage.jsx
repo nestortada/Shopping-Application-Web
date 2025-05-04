@@ -23,7 +23,7 @@ export default function ForgotPage() {
     try {
       // 1) Pido al backend que genere y guarde el token
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/auth/forgot-password`,
+        `${import.meta.env.VITE_BACKEND_URL}${import.meta.env.VITE_API_URL}/auth/forgot-password`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -34,7 +34,6 @@ export default function ForgotPage() {
       if (!response.ok) {
         throw new Error(result.message || 'Error al procesar la solicitud')
       }
-
 
       // 3) Envío el correo con EmailJS
       await emailjs.send(
