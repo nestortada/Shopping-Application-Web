@@ -1,6 +1,6 @@
 // api/routes/auth.js
 import express from 'express';
-import { registerUser, checkEmail, loginUser, getUserProfile, updateUserRole } from '../controllers/authController.js';
+import { registerUser, checkEmail, loginUser, getUserProfile, updateUserRole, forgotPassword, resetPassword } from '../controllers/authController.js';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
 
 export default function authRoutes(db) {
@@ -16,6 +16,14 @@ export default function authRoutes(db) {
 
   router.post('/login', (req, res, next) =>
     loginUser(req, res, next, db)
+  );
+
+  router.post('/forgot-password', (req, res, next) =>
+    forgotPassword(req, res, next, db)
+  );
+
+  router.post('/reset-password', (req, res, next) =>
+    resetPassword(req, res, next, db)
   );
 
   router.get('/me', authenticateToken, getUserProfile);
