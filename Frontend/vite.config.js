@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    base: env.VITE_BASE_PATH || '/Shopping-Application-Web/',
+    base: env.VITE_BASE_PATH || '/Shopping-Application-Web',
     plugins: [react(), tailwindcss()],
     server: {
       proxy: {
