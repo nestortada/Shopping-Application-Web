@@ -8,7 +8,7 @@ import SuccessModal from '../../components/SuccessModal';
 import { routes } from '../../config/routes';
 import emailIcon from '../../assets/correo-electronico.png';
 import lockIcon from '../../assets/bloqueo-alternativo.png';
-
+import { updateUserRole } from '../../services/authService';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -114,5 +114,40 @@ export default function RegisterPage() {
 
       {showModal && <SuccessModal onClose={handleModalClose} />}
     </main>
-);
+  );
+}
+
+export function UpdateRolePage() {
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('Perfil Cliente');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+
+    try {
+      await updateUserRole({ email, role });
+      setMessage('Rol actualizado correctamente');
+    } catch (err) {
+      setMessage(err.message);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="email"
+        placeholder="Correo del usuario"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <select value={role} onChange={(e) => setRole(e.target.value)}>
+        <option value="Perfil Cliente">Perfil Cliente</option>
+        <option value="Perfil POS">Perfil POS</option>
+      </select>
+      <button type="submit">Actualizar Rol</button>
+      {message && <p>{message}</p>}
+    </form>
+  );
 }

@@ -1,11 +1,7 @@
 // src/pages/LoginPage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  useMsal,
-  UnauthenticatedTemplate
-} from '@azure/msal-react';
-import { loginRequest } from '../../auth/auth-config';
+import { login } from '../../services/authService';
 import InputBox from '../../components/InputBox';
 import Button from '../../components/Button';
 import cafeImg from '../../assets/cafe.png';
@@ -17,22 +13,19 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const { instance } = useMsal();
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Aquí implementa tu lógica de validación si la necesitas
-    navigate('/map');
-  };
+    setError('');
 
-  const handleMsLogin = () => {
-    instance
-      .loginRedirect({
-        ...loginRequest,
-        prompt: 'create',
-      })
-      .catch((error) => console.error(error));
+    try {
+      const { token } = await login({ email, password });
+      localStorage.setItem('token', token); // Guardar el token en localStorage
+      navigate('/map'); // Redirigir a la página del mapa
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -50,6 +43,8 @@ export default function LoginPage() {
           Iniciar sesión
         </h1>
       </header>
+
+      {error && <p className="text-red-500 mb-4">{error}</p>}
 
       {/* Formulario Email/Password */}
       <form
@@ -91,17 +86,6 @@ export default function LoginPage() {
         />
       </form>
 
-      {/* Login con Microsoft */}
-      <section className="mt-8 text-center">
-        <UnauthenticatedTemplate>
-          <Button
-            color="bg-white text-black border-gray-300"
-            text="Microsoft 365"
-            onClick={handleMsLogin}
-          />
-        </UnauthenticatedTemplate>
-      </section>
-
       {/* Footer */}
       <footer className="mt-6 space-y-2 text-center">
         <Link
@@ -121,5 +105,5 @@ export default function LoginPage() {
         </p>
       </footer>
     </main>
-);
+  );
 }
