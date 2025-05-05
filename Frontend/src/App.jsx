@@ -11,6 +11,8 @@ import { routes } from './config/routes';
 import { BackgroundProvider, useBackground } from './context/BackgroundContext';
 import RedirectHandler from './pages/RedirectHandler';
 import {Navigate} from 'react-router-dom';
+import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import { AnimatePresence, motion } from 'framer-motion';
 
 function AppContent() {
   const { backgroundColor, updateBackgroundColor } = useBackground();
@@ -24,17 +26,28 @@ function AppContent() {
   return (
     <div className={twMerge('flex flex-col min-h-screen', backgroundColor)}>
       <main className="flex-grow">
-        <Routes>
-          {routes.map(route => (
-            <Route
-              key={route.id}
-              path={route.path}
-              element={<route.component />}
-            />
-          ))}
-          <Route path="/redirect" element={<RedirectHandler />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            {routes.map(route => (
+              <Route
+                key={route.id}
+                path={route.path}
+                element={
+                  <motion.div
+                    initial={{ opacity: 0, x: 100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <route.component />
+                  </motion.div>
+                }
+              />
+            ))}
+            <Route path="/redirect" element={<RedirectHandler />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AnimatePresence>
       </main>
     </div>
   );
