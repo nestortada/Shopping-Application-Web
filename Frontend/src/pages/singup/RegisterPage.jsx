@@ -12,12 +12,13 @@ import { updateUserRole } from '../../services/authService';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const [email, setEmail]             = useState('');
-  const [password, setPassword]       = useState('');
-  const [error, setError]             = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState(''); // Nuevo estado
+  const [error, setError] = useState('');
   const [emailExists, setEmailExists] = useState(false);
-  const [checking, setChecking]       = useState(false);
-  const [showModal, setShowModal]     = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const loginPath = routes.find(r => r.id === 'login')?.path || '/';
 
@@ -45,6 +46,11 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      return;
+    }
 
     if (emailExists) {
       setError('Este correo ya está registrado. Usa otro por favor.');
@@ -95,6 +101,15 @@ export default function RegisterPage() {
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value)}
+        />
+
+        <InputBox
+          id="confirmPassword"
+          iconSrc={lockIcon}
+          placeholder="Confirmar contraseña"
+          type="password"
+          value={confirmPassword}
+          onChange={e => setConfirmPassword(e.target.value)}
         />
 
         <Button

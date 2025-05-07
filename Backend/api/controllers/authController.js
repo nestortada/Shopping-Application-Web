@@ -1,5 +1,3 @@
-// backend/api/controllers/authController.js
-
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';  // ← Importamos ObjectId
@@ -31,8 +29,17 @@ export async function registerUser(req, res, next, db) {
 
     const salt = await bcrypt.genSalt(12);
     const hashed = await bcrypt.hash(password, salt);
-    await users.insertOne({ email, password: hashed, role, createdAt: new Date() });
-
+    
+    // Initialize user with balance
+    const user = {
+      email,
+      password: hashed,
+      role,
+      balance: 0,
+      createdAt: new Date()
+    };
+    
+    await users.insertOne(user);
     res.status(201).json({ message: 'Usuario registrado', role });
   } catch (err) {
     next(err);
@@ -92,8 +99,33 @@ export async function loginUser(req, res, next, db) {
  * Devuelve el perfil (id, email, rol) del usuario autenticado.
  */
 export async function getUserProfile(req, res) {
-  const { id, email, role } = req.user;
-  res.status(200).json({ id, email, role });
+  const { id, email, role } = req.user;  // Extraemos los datos del usuario del token
+  
+  try {
+    // Obtenemos la referencia a la base de datos desde el request
+    const db = req.app.get('db');
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
+
+    const users = db.collection('users');
+    const user = await users.findOne({ _id: new ObjectId(id) });
+
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Responder con los datos básicos del usuario, incluyendo el balance
+    res.status(200).json({
+      id,
+      email,
+      role,
+      balance: user.balance || 0
+    });
+  } catch (err) {
+    console.error('Error getting user profile:', err);
+    res.status(500).json({ message: 'Error al obtener el perfil del usuario' });
+  }
 }
 
 /**
@@ -153,10 +185,9 @@ export async function forgotPassword(req, res, next, db) {
       }
     );
 
-    // Determinar qué URL del frontend usar basado en el origen de la petición
     const frontendUrls = process.env.FRONTEND_URLS.split(',').map(url => url.trim());
     const origin = req.headers.origin;
-    const baseUrl = frontendUrls.includes(origin) ? origin : frontendUrls[frontendUrls.length - 1]; // Usa la última URL (producción) como fallback
+    const baseUrl = frontendUrls.includes(origin) ? origin : frontendUrls[frontendUrls.length - 1];
     const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
 
     return res.status(200).json({
@@ -176,33 +207,26 @@ export async function resetPassword(req, res, next, db) {
   try {
     const { token, newPassword } = req.body;
     if (!token || !newPassword) {
-      console.log('Token o nueva contraseña faltante');
       return res.status(400).json({ message: 'Token y nueva contraseña son requeridos' });
     }
 
     let payload;
     try {
       payload = jwt.verify(token, process.env.JWT_RESET_SECRET);
-      console.log('Token verificado con éxito:', payload);
     } catch (err) {
-      console.error('Error al verificar el token:', err.message);
       return res.status(400).json({ message: 'Token inválido o expirado' });
     }
 
     const users = db.collection('users');
-    // ← Convertimos payload.id (string) a ObjectId para que coincida con el _id de Mongo
     const user = await users.findOne({ _id: new ObjectId(payload.id), resetToken: token });
     if (!user) {
-      console.log('Usuario no encontrado o token no coincide');
       return res.status(400).json({ message: 'Token inválido o expirado' });
     }
 
     if (new Date() > new Date(user.resetTokenExpires)) {
-      console.log('Token expirado:', user.resetTokenExpires);
       return res.status(400).json({ message: 'Token expirado' });
     }
 
-    console.log('Actualizando contraseña para el usuario:', user._id);
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
     await users.updateOne(
@@ -213,10 +237,8 @@ export async function resetPassword(req, res, next, db) {
       }
     );
 
-    console.log('Contraseña actualizada exitosamente para el usuario:', user._id);
     return res.status(200).json({ message: 'Contraseña actualizada exitosamente' });
   } catch (err) {
-    console.error('Error en resetPassword:', err);
     next(err);
   }
 }

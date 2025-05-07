@@ -21,7 +21,7 @@ export default function ForgotPage() {
     setMessage('')
 
     try {
-      // 1) Pido al backend que genere y guarde el token
+      // 1) Solicitar al backend la generación del token de reset
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}${import.meta.env.VITE_API_URL}/auth/forgot-password`,
         {
@@ -35,7 +35,7 @@ export default function ForgotPage() {
         throw new Error(result.message || 'Error al procesar la solicitud')
       }
 
-      // 3) Envío el correo con EmailJS
+      // 2) Enviar el correo con el enlace de reset
       await emailjs.send(
         import.meta.env.VITE_EMAILJS_SERVICE_ID,
         import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
@@ -46,7 +46,7 @@ export default function ForgotPage() {
         }
       )
 
-      setMessage('Correo enviado correctamente. Revisa tu bandeja de entrada.')
+      setMessage('Te hemos enviado un correo con las instrucciones para restablecer tu contraseña.')
     } catch (err) {
       console.error('ForgotPage error:', err)
       setError(err.message)
@@ -55,14 +55,10 @@ export default function ForgotPage() {
 
   return (
     <main className="flex flex-grow flex-col items-center justify-center min-h-screen p-6 bg-[#FBFBFA]">
-      <header className="flex flex-col items-center mb-8">
-        <img src={emailIcon} alt="Email" className="w-16 h-16 mb-4" />
-        <h1 className="text-2xl font-semibold text-[#0E2F55]">
-          Recuperar contraseña
-        </h1>
-        <p className="text-sm text-gray-600">
-          Ingresa tu correo y te enviaremos un enlace para restaurarla.
-        </p>
+      <header className="text-center mb-8">
+        <img src={emailIcon} alt="Email icon" className="w-16 h-16 mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-[#0E2F55] mb-2">¿Olvidaste tu contraseña?</h1>
+        <p className="text-gray-600">Ingresa tu correo electrónico y te enviaremos instrucciones para restablecerla</p>
       </header>
 
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
@@ -71,6 +67,7 @@ export default function ForgotPage() {
           placeholder="Tu correo"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
 
         {error && <p className="text-red-600 text-sm">{error}</p>}
