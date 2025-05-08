@@ -28,44 +28,51 @@ app.use(cors({
 
 app.use(express.json());
 
-async function startServer() {
+// Crear una conexión reutilizable para el modo serverless
+let cachedClient = null;
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
+  }
+
   const client = new MongoClient(process.env.MONGO_URI, {
     serverApi: { version: ServerApiVersion.v1 }
   });
+
+  await client.connect();
+  const db = client.db(process.env.DB_NAME);
   
-  try {
-    // Intentamos conectar a MongoDB
-    await client.connect();
-    console.log('✅ MongoDB Atlas conectado');
-
-    const db = client.db(process.env.DB_NAME);
-    
-    // Store db connection in app for use in routes
-    app.set('db', db);
-    
-    // Utilizamos las rutas de autenticación
-    app.use('/api/v1/auth', authRoutes(db));
-
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () =>
-      console.log(`✅ Servidor corriendo en puerto ${PORT}`)
-    );
-
-    // Handle server shutdown
-    process.on('SIGINT', async () => {
-      await client.close();
-      process.exit(0);
-    });
-
-  } catch (err) {
-    console.error('❌ Error al conectar a MongoDB:', err.message);
-    process.exit(1);
-  }
+  cachedClient = client;
+  cachedDb = db;
+  
+  return { client, db };
 }
 
-startServer().catch(err => {
-  console.error('❌ Error al iniciar el servidor:', err.message);
-  process.exit(1);
+// Para desarrollo local
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`✅ Servidor corriendo en puerto ${PORT}`));
+}
+
+// Configurar rutas después de la conexión a la base de datos
+app.use(async (req, res, next) => {
+  try {
+    const { db } = await connectToDatabase();
+    req.app.set('db', db);
+    next();
+  } catch (error) {
+    console.error('Error connecting to database:', error);
+    res.status(500).json({ message: 'Database connection error' });
+  }
+});
+
+app.use('/api/v1/auth', authRoutes());
+
+// Ruta de healthcheck
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
 });
 
 export default app;

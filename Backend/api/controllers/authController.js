@@ -1,11 +1,11 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { ObjectId } from 'mongodb';  // ← Importamos ObjectId
+import { ObjectId } from 'mongodb';
 
 /**
  * Registra un nuevo usuario asignándole rol según el dominio de su email.
  */
-export async function registerUser(req, res, next, db) {
+export async function registerUser(req, res, next) {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -21,6 +21,7 @@ export async function registerUser(req, res, next, db) {
       return res.status(400).json({ message: 'Correo no válido para registro' });
     }
 
+    const db = req.app.get('db');
     const users = db.collection('users');
     const exists = await users.findOne({ email });
     if (exists) {
@@ -30,7 +31,6 @@ export async function registerUser(req, res, next, db) {
     const salt = await bcrypt.genSalt(12);
     const hashed = await bcrypt.hash(password, salt);
     
-    // Initialize user with balance
     const user = {
       email,
       password: hashed,
@@ -42,36 +42,41 @@ export async function registerUser(req, res, next, db) {
     await users.insertOne(user);
     res.status(201).json({ message: 'Usuario registrado', role });
   } catch (err) {
-    next(err);
+    console.error('Error en registerUser:', err);
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 }
 
 /**
  * Verifica si un email ya está registrado.
  */
-export async function checkEmail(req, res, next, db) {
+export async function checkEmail(req, res) {
   try {
     const { email } = req.query;
     if (!email) {
       return res.status(400).json({ message: 'Falta el email' });
     }
+    
+    const db = req.app.get('db');
     const exists = await db.collection('users').findOne({ email });
     res.json({ exists: !!exists });
   } catch (err) {
-    next(err);
+    console.error('Error en checkEmail:', err);
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 }
 
 /**
  * Autentica al usuario y devuelve un JWT con id, email y rol.
  */
-export async function loginUser(req, res, next, db) {
+export async function loginUser(req, res) {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ message: 'Faltan campos' });
     }
 
+    const db = req.app.get('db');
     const users = db.collection('users');
     const user = await users.findOne({ email });
     if (!user) {
@@ -91,23 +96,18 @@ export async function loginUser(req, res, next, db) {
 
     res.status(200).json({ token, message: 'Inicio de sesión exitoso' });
   } catch (err) {
-    next(err);
+    console.error('Error en loginUser:', err);
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 }
 
 /**
- * Devuelve el perfil (id, email, rol) del usuario autenticado.
+ * Devuelve el perfil del usuario autenticado.
  */
 export async function getUserProfile(req, res) {
-  const { id, email, role } = req.user;  // Extraemos los datos del usuario del token
-  
   try {
-    // Obtenemos la referencia a la base de datos desde el request
+    const { id, email, role } = req.user;
     const db = req.app.get('db');
-    if (!db) {
-      throw new Error('Database connection not available');
-    }
-
     const users = db.collection('users');
     const user = await users.findOne({ _id: new ObjectId(id) });
 
@@ -115,7 +115,6 @@ export async function getUserProfile(req, res) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    // Responder con los datos básicos del usuario, incluyendo el balance
     res.status(200).json({
       id,
       email,
@@ -123,15 +122,15 @@ export async function getUserProfile(req, res) {
       balance: user.balance || 0
     });
   } catch (err) {
-    console.error('Error getting user profile:', err);
-    res.status(500).json({ message: 'Error al obtener el perfil del usuario' });
+    console.error('Error en getUserProfile:', err);
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 }
 
 /**
- * Actualiza el rol de un usuario existente.
+ * Actualiza el rol de un usuario.
  */
-export async function updateUserRole(req, res, next, db) {
+export async function updateUserRole(req, res) {
   try {
     const { email, role } = req.body;
     if (!email || !role) {
@@ -141,28 +140,32 @@ export async function updateUserRole(req, res, next, db) {
       return res.status(400).json({ message: 'Rol inválido' });
     }
 
+    const db = req.app.get('db');
     const users = db.collection('users');
     const result = await users.updateOne({ email }, { $set: { role } });
+    
     if (result.matchedCount === 0) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
     res.status(200).json({ message: 'Rol actualizado correctamente' });
   } catch (err) {
-    next(err);
+    console.error('Error en updateUserRole:', err);
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 }
 
 /**
- * Genera un resetToken, lo guarda en BD y devuelve el enlace.
+ * Genera un token de recuperación de contraseña.
  */
-export async function forgotPassword(req, res, next, db) {
+export async function forgotPassword(req, res) {
   try {
     const { email } = req.body;
     if (!email) {
       return res.status(400).json({ message: 'El correo electrónico es requerido' });
     }
 
+    const db = req.app.get('db');
     const users = db.collection('users');
     const user = await users.findOne({ email });
     if (!user) {
@@ -190,20 +193,20 @@ export async function forgotPassword(req, res, next, db) {
     const baseUrl = frontendUrls.includes(origin) ? origin : frontendUrls[frontendUrls.length - 1];
     const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
 
-    return res.status(200).json({
+    res.status(200).json({
       message: 'Token generado con éxito',
       resetLink
     });
   } catch (err) {
     console.error('Error en forgotPassword:', err);
-    return res.status(500).json({ message: 'Error al procesar la solicitud' });
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 }
 
 /**
- * Verifica el token, actualiza la contraseña y limpia el resetToken.
+ * Restablece la contraseña usando el token.
  */
-export async function resetPassword(req, res, next, db) {
+export async function resetPassword(req, res) {
   try {
     const { token, newPassword } = req.body;
     if (!token || !newPassword) {
@@ -217,8 +220,10 @@ export async function resetPassword(req, res, next, db) {
       return res.status(400).json({ message: 'Token inválido o expirado' });
     }
 
+    const db = req.app.get('db');
     const users = db.collection('users');
     const user = await users.findOne({ _id: new ObjectId(payload.id), resetToken: token });
+    
     if (!user) {
       return res.status(400).json({ message: 'Token inválido o expirado' });
     }
@@ -237,8 +242,9 @@ export async function resetPassword(req, res, next, db) {
       }
     );
 
-    return res.status(200).json({ message: 'Contraseña actualizada exitosamente' });
+    res.status(200).json({ message: 'Contraseña actualizada exitosamente' });
   } catch (err) {
-    next(err);
+    console.error('Error en resetPassword:', err);
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 }
