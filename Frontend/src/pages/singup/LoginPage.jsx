@@ -14,17 +14,21 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     try {
       const { token } = await login({ email, password });
-      localStorage.setItem('token', token); // Guardar el token en localStorage
-      navigate('/map'); // Redirigir a la página del mapa
+      localStorage.setItem('token', token);
+      navigate('/map');
     } catch (err) {
       setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -62,6 +66,7 @@ export default function LoginPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading}
           />
         </div>
 
@@ -76,13 +81,15 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
           />
         </div>
 
         <Button
           color="bg-[#0E2F55] text-white"
-          text="Iniciar sesión"
+          text={isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
           onClick={handleSubmit}
+          disabled={isLoading}
         />
       </form>
 

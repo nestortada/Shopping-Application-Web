@@ -1,20 +1,19 @@
 /* src/pages/RegisterPage.jsx */
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { registerApi } from '../../services/apiAuthService';
+import { register, checkEmail, updateUserRole } from '../../services/authService';
 import InputBox from '../../components/InputBox';
 import Button from '../../components/Button';
 import SuccessModal from '../../components/SuccessModal';
 import { routes } from '../../config/routes';
 import emailIcon from '../../assets/correo-electronico.png';
 import lockIcon from '../../assets/bloqueo-alternativo.png';
-import { updateUserRole } from '../../services/authService';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState(''); // Nuevo estado
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [emailExists, setEmailExists] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -22,21 +21,13 @@ export default function RegisterPage() {
 
   const loginPath = routes.find(r => r.id === 'login')?.path || '/';
 
-  // Base URL de la API desde .env (VITE_API_URL)
-  const API_URL = import.meta.env.VITE_API_URL;
-
-  // Verifica si el email ya existe
   const handleEmailBlur = async () => {
     if (!email) return;
     setChecking(true);
     try {
-      const res = await fetch(
-        // Se añadió "/auth" antes de "check-email"
-        `${API_URL}/auth/check-email?email=${encodeURIComponent(email)}`
-      );
-      const { exists } = await res.json();
+      const exists = await checkEmail(email);
       setEmailExists(exists);
-    } catch {
+    } catch (err) {
       setEmailExists(false);
     } finally {
       setChecking(false);
@@ -58,8 +49,7 @@ export default function RegisterPage() {
     }
 
     try {
-      // registerApi ya hace fetch(`${API_URL}/auth/register`, …)
-      await registerApi({ email, password });
+      await register({ email, password });
       setShowModal(true);
     } catch (err) {
       setError(err.message || 'Error al registrarte');
