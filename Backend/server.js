@@ -13,18 +13,30 @@ const allowedOrigins = process.env.FRONTEND_URLS
   ? process.env.FRONTEND_URLS.split(',').map(u => u.trim())
   : ['http://localhost:5173']; // Default for development
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Para herramientas sin origin (p.ej. Postman) o desarrollo local
-    if (!origin || allowedOrigins.includes(origin)) {
+// Configuración CORS más permisiva para desarrollo
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permitir solicitudes sin origin (como las de Postman)
+    if (!origin) {
       return callback(null, true);
     }
-    callback(new Error(`CORS: origen ${origin} no permitido`));
+    
+    // Verificar si el origin está en la lista de permitidos
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
   },
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,
-  allowedHeaders: ['Content-Type','Authorization']
-}));
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Habilitar preflight para todas las rutas
 
 app.use(express.json());
 
