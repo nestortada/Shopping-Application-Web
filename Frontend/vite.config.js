@@ -11,10 +11,19 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: env.VITE_BACKEND_URL || 'http://localhost:5000', // Usar variable de entorno para el backend
+          target: env.VITE_BACKEND_URL || 'http://localhost:5000',
           changeOrigin: true,
         },
+        '/v0': {
+          target: 'https://firebasestorage.googleapis.com',
+          changeOrigin: true,
+          secure: false,
+          headers: {
+            'Access-Control-Allow-Origin': '*'
+          }
+        }
       },
+      cors: true
     },
   };
 });
