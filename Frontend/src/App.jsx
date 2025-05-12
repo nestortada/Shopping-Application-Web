@@ -13,6 +13,7 @@ import RedirectHandler from './pages/RedirectHandler';
 import {Navigate} from 'react-router-dom';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { AnimatePresence, motion } from 'framer-motion';
+import { CardProvider } from './context/CardContext';
 
 function AppContent() {
   const { backgroundColor, updateBackgroundColor } = useBackground();
@@ -60,7 +61,9 @@ export default function App() {
   return (
     <Router basename={basename}>
       <BackgroundProvider>
-        <AppContent />
+        <CardProvider>
+          <AppContent />
+        </CardProvider>
       </BackgroundProvider>
     </Router>
   );
