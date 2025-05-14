@@ -1,22 +1,21 @@
-// src/firebase/firebaseConfig.js
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore } from "@firebase/firestore"
 import { getStorage } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBmsYf38R_kFJRHqdmPCWq4KvYPcm_St8c",
-  authDomain: "bdweb-c0c9f.firebaseapp.com",
-  databaseURL: "https://bdweb-c0c9f-default-rtdb.firebaseio.com",
-  projectId: "bdweb-c0c9f",
-  storageBucket: "bdweb-c0c9f.firebasestorage.app",
-  messagingSenderId: "788700727044",
-  appId: "1:788700727044:web:0a1b1807f9b3a4e2c5b251",
-  measurementId: "G-1D7RKWG7JK"
+  apiKey: "AIzaSyCZS-B9yeYNTUR8wxyiQZFRa0kL74n1WWI",
+  authDomain: "base-datos-apliacion-web.firebaseapp.com",
+  projectId: "base-datos-apliacion-web",
+  storageBucket: "base-datos-apliacion-web.firebasestorage.app",
+  messagingSenderId: "626487116415",
+  appId: "1:626487116415:web:96e739e65074235e4ab54a",
+  measurementId: "G-WMFXC63J0T"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
 const db = getFirestore(app);
 const storage = getStorage(app);
-
-export { db, storage };
+const auth = getAuth(app);
+export { db, storage, auth };

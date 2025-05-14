@@ -16,13 +16,13 @@ const allowedOrigins = process.env.FRONTEND_URLS
 // Configuración CORS más permisiva para desarrollo
 const corsOptions = {
   origin: function (origin, callback) {
-    // Permitir solicitudes sin origin (como las de Postman)
-    if (!origin) {
+    // En desarrollo, permitir todas las solicitudes
+    if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
     
-    // Verificar si el origin está en la lista de permitidos
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // En producción, verificar contra la lista de orígenes permitidos
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
