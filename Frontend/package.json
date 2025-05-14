@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
   "name": "final-projectjs",
   "private": true,
@@ -39,44 +38,3 @@
     "vite": "^6.3.5"
   }
 }
-=======
-{
-  "name": "final-projectjs",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "lint": "eslint .",
-    "vercel-build": "vite build"
-  },
-  "dependencies": {
-    "@azure/msal-browser": "^4.11.1",
-    "@azure/msal-react": "^3.0.11",
-    "@emailjs/browser": "^4.4.1",
-    "@tailwindcss/vite": "^4.1.5",
-    "final-projectjs": "file:",
-    "framer-motion": "^12.9.7",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^7.5.3",
-    "react-transition-group": "^4.4.5",
-    "tailwind-merge": "^3.2.0",
-    "tailwind-scrollbar": "^4.0.2",
-    "tailwindcss": "^4.1.5"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.22.0",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
-    "@vitejs/plugin-react": "^4.3.4",
-    "eslint": "^9.22.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.19",
-    "globals": "^16.0.0",
-    "vite": "^6.3.5"
-  }
-}
->>>>>>> c6cd8408e916d3b9e06962cd004552a3bafe1093
