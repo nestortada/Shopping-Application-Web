@@ -42,6 +42,7 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }) {
     setError('');
 
     try {
+      // 1. Subir imagen al Storage
       let imageURL = '';
       if (formData.imagen) {
         const imgRef = ref(storage, `productos/${formData.imagen.name}`);
@@ -49,22 +50,36 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }) {
         imageURL = await getDownloadURL(imgRef);
       }
 
-      // Obtener el prefijo del email del usuario (antes de @sabanapos.edu.co)
-      const userEmail = auth.currentUser?.email;
-      const collectionPrefix = userEmail ? userEmail.split('@')[0] : 'default';
-      const collectionName = collectionPrefix;
-
-      await addDoc(collection(db, collectionName), {
-        ...formData,
+      // 2. Guardar datos en Firestore
+      // Puedes cambiar "productos" por el nombre de colección que necesites
+      await addDoc(collection(db, "meson"), {
+        id: formData.id,
+        nombre: formData.nombre,
+        categoria: formData.categoria,
+        descripcion: formData.descripcion,
+        ingredientes: formData.ingredientes,
+        stock: Number(formData.stock),
+        precio: Number(formData.precio),
         imagenURL: imageURL,
-        imagen: null // No guardar el objeto File
+        // No guardes el objeto File
       });
 
       onSuccess?.();
       onClose();
-    } catch (err) {
-      console.error('Error al agregar producto:', err);
-      setError('Error al guardar el producto. Por favor intente nuevamente.');
+      // Opcional: limpia el formulario si lo deseas
+      setFormData({
+        id: '',
+        nombre: '',
+        categoria: 'Bebida Caliente',
+        descripcion: '',
+        ingredientes: '',
+        stock: '',
+        precio: '',
+        imagen: null
+      });
+    } catch (error) {
+      console.error("Error al guardar producto:", error);
+      setError("Hubo un error al guardar el producto.");
     } finally {
       setIsLoading(false);
     }

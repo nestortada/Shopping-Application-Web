@@ -6,7 +6,7 @@ import ResetPasswordPage from '../pages/ResetPasswordPage';
 import MyCardsPage from '../pages/Client/Payment/MyCardsPage';
 import ConfirmPaymentPage from '../pages/Client/Payment/ConfirmPaymentPage';
 import AddCardPage from '../pages/Client/Payment/AddCardPage';
-import ProductList from '../pages/POS/Inventary/ProductList';
+import ProductList from '../pages/POS/Inventory/ProductList';
 import ProductsPage from '../pages/Products/ProductsPage';
 import CartPage from '../pages/Cart/CartPage';
 
