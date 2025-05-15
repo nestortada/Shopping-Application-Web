@@ -6,7 +6,7 @@ import ResetPasswordPage from '../pages/ResetPasswordPage';
 import MyCardsPage from '../pages/Client/Payment/MyCardsPage';
 import ConfirmPaymentPage from '../pages/Client/Payment/ConfirmPaymentPage';
 import AddCardPage from '../pages/Client/Payment/AddCardPage';
-import ProductList from '../pages/POS/Inventary/ProductList';
+import ProductList from '../pages/POS/Inventory/ProductList';
 
 export const routes = [
   { id: 'login', path: '/', component: LoginPage },
