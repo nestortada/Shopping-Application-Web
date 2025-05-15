@@ -15,7 +15,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -24,7 +23,16 @@ export default function LoginPage() {
     try {
       const { token } = await login({ email, password });
       localStorage.setItem('token', token);
-      navigate('/map');
+      localStorage.setItem('userEmail', email);
+      
+      // Check if user is POS (email ends with @sabanapos.edu.co)
+      if (email.endsWith('@sabanapos.edu.co')) {
+        // POS users go directly to productos page
+        navigate('/productos');
+      } else {
+        // Regular customers go to map to select a location
+        navigate('/map');
+      }
     } catch (err) {
       setError(err.message);
     } finally {

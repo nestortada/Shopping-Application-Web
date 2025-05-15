@@ -12,12 +12,30 @@ import profileIcon from '../../../assets/usuario.png';
 
 export default function MapPage() {
   const [searchText, setSearchText] = useState('');
-  const [filterType, setFilterType] = useState('Restaurantes');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [filterType, setFilterType] = useState('Restaurantes');  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [containerHeight, setContainerHeight] = useState(300);
   const dragRef = useRef(null);
   const navigate = useNavigate();
+  
+  // Function to handle location card clicks
+  const handleLocationClick = (id, title) => {
+    // Convert location title to a collection name (lowercase, no spaces)
+    let collectionId = title.toLowerCase().replace(/\s+/g, '');
+    
+    // Special case for Mesón de La Sabana
+    if (title === 'Mesón de La Sabana') {
+      collectionId = 'meson';
+    }
+    
+    // Navigate to products page with location info
+    navigate('/products', { 
+      state: { 
+        locationId: collectionId,
+        locationTitle: title
+      } 
+    });
+  };
 
   const allLocations = [
     { id: '1', image: null, title: 'Mesón de La Sabana', type: 'Restaurantes' },
@@ -131,9 +149,7 @@ export default function MapPage() {
           onMouseDown={handleMouseDown}
         >
           <div className="w-20 h-1 bg-[#3F2EDA] rounded-full"></div>
-        </div>
-
-        {/* Lista de tarjetas con scroll */}
+        </div>        {/* Lista de tarjetas con scroll */}
         <section
           ref={dragRef}
           style={{ height: `${containerHeight}px` }}
@@ -141,7 +157,13 @@ export default function MapPage() {
         >
           <div className="h-full overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-[#3F2EDA] scrollbar-track-gray-200">
             {visible.map((loc) => (
-              <LocationCard key={loc.id} imageSrc={loc.image} title={loc.title} />
+              <LocationCard 
+                key={loc.id} 
+                id={loc.id} 
+                imageSrc={loc.image} 
+                title={loc.title} 
+                onClick={handleLocationClick}
+              />
             ))}
           </div>
         </section>

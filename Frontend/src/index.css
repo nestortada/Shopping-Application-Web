@@ -1,1 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Paprika&display=swap');
 @import "tailwindcss";
+
+body {
+  font-family: 'Paprika', sans-serif;
+}

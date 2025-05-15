@@ -1,9 +1,12 @@
 // src/components/LocationCard.jsx
 import React from 'react'
 
-export default function LocationCard({ imageSrc, title }) {
+export default function LocationCard({ imageSrc, title, id, onClick }) {
   return (
-    <article className="w-full h-24 flex items-center bg-pink-100 shadow-md rounded-2xl overflow-hidden my-2">
+    <article 
+      className="w-full h-24 flex items-center bg-pink-100 shadow-md rounded-2xl overflow-hidden my-2 cursor-pointer hover:shadow-lg transition-all"
+      onClick={() => onClick(id, title)}
+    >
       <figure className="w-1/3 h-full">
         <img src={imageSrc} alt={title} className="object-cover w-full h-full" />
       </figure>

@@ -5,7 +5,11 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        'paprika': ['Paprika', 'sans-serif'],
+      }
+    },
   },
   plugins: [
     require('tailwind-scrollbar'),
