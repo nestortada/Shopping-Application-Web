@@ -8,6 +8,7 @@ import ConfirmPaymentPage from '../pages/Client/Payment/ConfirmPaymentPage';
 import AddCardPage from '../pages/Client/Payment/AddCardPage';
 import ProductList from '../pages/POS/Inventory/ProductList';
 import ProductsPage from '../pages/Products/ProductsPage';
+import FoodPage from '../pages/Products/FoodPage';
 import CartPage from '../pages/Cart/CartPage';
 
 export const routes = [
@@ -15,11 +16,13 @@ export const routes = [
   { id: 'map', path: '/map', component: MapPage },
   { id: 'forgot', path: '/forgot', component: ForgotPage },
   { id: 'register', path: '/register', component: RegisterPage },
-  { id: 'reset-password', path: '/reset-password', component: ResetPasswordPage },
-  { id: 'my-cards', path: '/cards', component: MyCardsPage },
+  { id: 'reset-password', path: '/reset-password', component: ResetPasswordPage },  { id: 'my-cards', path: '/cards', component: MyCardsPage },
   { id: 'confirm-payment', path: '/confirm-payment', component: ConfirmPaymentPage },
-  { id: 'add-card', path: '/add-card', component: AddCardPage },  { id: 'productos', path: '/productos', component: ProductsPage },
+  { id: 'add-card', path: '/add-card', component: AddCardPage },  
+  { id: 'productos', path: '/productos', component: ProductsPage },
   { id: 'products', path: '/products', component: ProductsPage },
+  { id: 'products-location', path: '/products/:locationId', component: ProductsPage },
+  { id: 'food', path: '/food/:locationId/:productId', component: FoodPage },
   { id: 'inventory', path: '/inventory', component: ProductList },
   { id: 'cart', path: '/cart', component: CartPage },
 ]

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useCartContext } from '../../context/CartContext';
 import TopBar from './components/TopBar';
 import SearchBar from './components/SearchBar';
@@ -22,13 +22,32 @@ export default function ProductsPage() {
   const [isPOSUser, setIsPOSUser] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { cartItemsCount } = useCartContext();
-  
-  const location = useLocation();
+    const location = useLocation();
   const navigate = useNavigate();
+  const { locationId: urlLocationId } = useParams();
   
-  // Get location from route state if available (from MapPage)
+  // Get location from route params or state
   useEffect(() => {
-    if (location.state?.locationId) {
+    // First check if we have a location ID in the URL parameters
+    if (urlLocationId) {
+      setLocationId(urlLocationId);
+      
+      // Try to set the location title from localStorage if available
+      const storedLocations = localStorage.getItem('locations');
+      if (storedLocations) {
+        try {
+          const locations = JSON.parse(storedLocations);
+          const location = locations.find(loc => loc.id === urlLocationId);
+          if (location) {
+            setLocationTitle(location.name);
+          }
+        } catch (e) {
+          console.error('Error parsing locations from localStorage:', e);
+        }
+      }
+    } 
+    // Otherwise check if we have location info in the route state (from MapPage)
+    else if (location.state?.locationId) {
       setLocationId(location.state.locationId);
       // Set the location title if available
       if (location.state?.locationTitle) {
@@ -49,7 +68,7 @@ export default function ProductsPage() {
         navigate('/map');
       }
     }
-  }, [location, navigate, locationId]);
+  }, [location, navigate, locationId, urlLocationId]);
 
   // Fetch products when locationId changes
   useEffect(() => {
@@ -151,6 +170,7 @@ export default function ProductsPage() {
             products={filteredProducts}
             category={selectedCategory}
             onSelectCategory={setSelectedCategory}
+            locationId={locationId}
           />
         </section>
       </main>

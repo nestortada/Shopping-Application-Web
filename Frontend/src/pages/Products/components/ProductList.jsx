@@ -1,16 +1,19 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import ProductCard from './ProductCard';
 
-export default function ProductList({ products, category, onSelectCategory }) {
+export default function ProductList({ products, category, onSelectCategory, locationId }) {
   const filteredProducts = category === 'All' 
     ? products 
-    : products.filter(product => product.categoria === category || product.category === category);  return (
+    : products.filter(product => product.categoria === category || product.category === category);
+    
+  return (
     <div className="space-y-3 sm:space-y-4 w-full" id="product-list">
       {filteredProducts.length > 0 ? (
         <ul className="list-none p-0 space-y-3 sm:space-y-4 w-full">
           {filteredProducts.map(product => (
             <li key={product.id} className="w-full flex justify-center">
-              <ProductCard product={product} />
+              <ProductCard product={product} locationId={locationId} />
             </li>
           ))}
         </ul>
@@ -28,7 +31,13 @@ export default function ProductList({ products, category, onSelectCategory }) {
             </button>
           )}
         </div>
-      )}
-    </div>
+      )}    </div>
   );
 }
+
+ProductList.propTypes = {
+  products: PropTypes.array.isRequired,
+  category: PropTypes.string.isRequired,
+  onSelectCategory: PropTypes.func.isRequired,
+  locationId: PropTypes.string.isRequired
+};

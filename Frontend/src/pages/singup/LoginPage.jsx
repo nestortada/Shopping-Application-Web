@@ -14,8 +14,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const handleSubmit = async (e) => {
+  const [isLoading, setIsLoading] = useState(false);  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -25,12 +24,19 @@ export default function LoginPage() {
       localStorage.setItem('token', token);
       localStorage.setItem('userEmail', email);
       
-      // Check if user is POS (email ends with @sabanapos.edu.co)
-      if (email.endsWith('@sabanapos.edu.co')) {
-        // POS users go directly to productos page
+      // Check if there's a redirect location saved
+      const redirectUrl = localStorage.getItem('redirectAfterLogin');
+      
+      if (redirectUrl) {
+        // Clear the redirect URL from localStorage
+        localStorage.removeItem('redirectAfterLogin');
+        // Redirect to the saved URL
+        navigate(redirectUrl);
+      } else if (email.endsWith('@sabanapos.edu.co')) {
+        // POS users go directly to productos page if no specific redirect
         navigate('/productos');
       } else {
-        // Regular customers go to map to select a location
+        // Regular customers go to map to select a location if no specific redirect
         navigate('/map');
       }
     } catch (err) {

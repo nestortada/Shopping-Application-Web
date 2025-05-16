@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, locationId }) {
   const { name, description, price, imageUrl } = product;
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);  const navigate = useNavigate();
 
   const toggleDetails = () => {
     setShowDetails(!showDetails);
   };
+    const navigateToProductDetail = (e) => {
+    e.stopPropagation();
+    console.log('Navegando a producto:', product);
+    // Intentar usar id o fallback a docId si existe
+    const productId = product.id || '';
+    navigate(`/food/${locationId}/${productId}`);
+  };
+  
   // Basic card (collapsed)
   if (!showDetails) {
     return (
@@ -24,8 +34,7 @@ export default function ProductCard({ product }) {
             e.target.src = `https://placehold.co/62x62/CFCFCF/FFF?text=${name.charAt(0)}`;
           }}
         />
-        <div className="ml-3 sm:ml-4 flex-1 min-w-0">
-          <h3 className="font-paprika text-[16px] sm:text-[18px] text-[#0F172A] truncate">
+        <div className="ml-3 sm:ml-4 flex-1 min-w-0">          <h3 className="font-paprika text-[16px] sm:text-[18px] text-[#0F172A] truncate">
             {name}
           </h3>
           <p className="font-paprika text-[12px] sm:text-[14px] text-[#475569] line-clamp-1">
@@ -84,9 +93,27 @@ export default function ProductCard({ product }) {
             <p className="font-paprika text-[12px] sm:text-[14px] text-[#475569]">
               {product.ingredientes}
             </p>
-          </div>
-        )}
+          </div>        )}
+        
+        <button
+          onClick={navigateToProductDetail}
+          className="mt-4 w-full py-2 px-4 bg-[#5947FF] text-white rounded-xl text-sm font-medium hover:bg-[#4937e0] transition-colors"
+        >
+          Ver detalles
+        </button>
       </div>
     </article>
   );
 }
+
+ProductCard.propTypes = {
+  product: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    name: PropTypes.string,
+    description: PropTypes.string,
+    price: PropTypes.number,
+    imageUrl: PropTypes.string,
+    ingredientes: PropTypes.string
+  }).isRequired,
+  locationId: PropTypes.string.isRequired
+};
