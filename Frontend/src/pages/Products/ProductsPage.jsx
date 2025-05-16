@@ -8,20 +8,25 @@ import SearchBar from './components/SearchBar';
 import CategoryFilter from './components/CategoryFilter';
 import ProductList from './components/ProductList';
 import BottomNavWithMap from './components/BottomNavWithMap';
+import UserDashboard from '../../components/UserDashboard';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);  const [locationId, setLocationId] = useState(null);
+  const [error, setError] = useState(null);
+  const [locationId, setLocationId] = useState(null);
   const [locationTitle, setLocationTitle] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isPOSUser, setIsPOSUser] = useState(false);  // Use cart context instead of local state for cart items count
+  const [isPOSUser, setIsPOSUser] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { cartItemsCount } = useCartContext();
   
   const location = useLocation();
-  const navigate = useNavigate();  // Get location from route state if available (from MapPage)
+  const navigate = useNavigate();
+  
+  // Get location from route state if available (from MapPage)
   useEffect(() => {
     if (location.state?.locationId) {
       setLocationId(location.state.locationId);
@@ -55,31 +60,23 @@ export default function ProductsPage() {
         }
 
         setLoading(true);
-        
-        // Fetch from Firestore
-        const querySnapshot = await getDocs(collection(db, locationId));
-        const productsData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().nombre || '',
-          description: doc.data().descripcion || '',
-          category: doc.data().categoria || '',
-          price: doc.data().precio || 0,
-          imageUrl: doc.data().imagenUrl || 'https://placehold.co/62x62/CFCFCF/FFF?text=No+Image',
-          ...doc.data()
-        }));
+          // Fetch from Firestore
+        const querySnapshot = await getDocs(collection(db, locationId));        const productsData = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.nombre || '',
+            description: data.descripcion || '',
+            category: data.categoria || '',
+            categoria: data.categoria || '', // Ensure we have both fields for compatibility
+            price: data.precio || 0,
+            imageUrl: data.imagenURL || data.imagenUrl || null, // Check both possible field names
+            ...data
+          };
+        });
 
-        // Fetch from API for prices
-        const apiResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/v1/catalog/products`);
-        const apiProducts = await apiResponse.json();
-
-        // Merge Firestore data with API prices
-        const mergedProducts = productsData.map(product => ({
-          ...product,
-          price: apiProducts.find(p => p.id === product.id)?.price || product.price
-        }));
-
-        setProducts(mergedProducts);
-        setFilteredProducts(mergedProducts);
+        setProducts(productsData);
+        setFilteredProducts(productsData);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -108,28 +105,54 @@ export default function ProductsPage() {
   const handleSearch = (term) => {
     setSearchTerm(term);
   };
-
-  if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  if (error) return <div className="text-red-500 p-4">{error}</div>;
-  return (
-    <div className="flex flex-col min-h-screen bg-[#FBFBFA]">
-      <TopBar 
-        isCustomer={!isPOSUser} 
-        cartItemsCount={cartItemsCount} 
-        locationTitle={locationTitle}
-      />
-      
-      <main className="flex-1 max-w-[360px] mx-auto w-full px-4 pt-4 pb-20">
-        <SearchBar onSearch={handleSearch} />
-        <CategoryFilter
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
+  if (loading) return <div className="flex items-center justify-center h-screen" aria-live="polite"><span className="sr-only">Loading products</span>Loading...</div>;
+  if (error) return <div className="text-red-500 p-4" aria-live="assertive" role="alert">{error}</div>;
+    return (
+    <div className="flex flex-col min-h-screen bg-[#FBFBFA] relative">
+      {/* Semi-transparent overlay when sidebar is open */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/30 z-10"
+          onClick={() => setIsSidebarOpen(false)}
+          aria-hidden="true"
         />
-        <section className="mt-4 bg-white rounded-3xl shadow-lg p-4">
-          <ProductList 
+      )}
+      
+      {/* Sidebar with UserDashboard */}
+      <section
+        className={`fixed top-0 left-0 h-full w-64 bg-[#3F2EDA] shadow-lg transform ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } transition-transform duration-300 z-20`}
+        aria-hidden={!isSidebarOpen}
+        aria-label="User dashboard"
+      >
+        <UserDashboard onClose={() => setIsSidebarOpen(false)} />
+      </section>
+      
+      <header>
+        <TopBar 
+          isCustomer={!isPOSUser} 
+          cartItemsCount={cartItemsCount} 
+          locationTitle={locationTitle}
+          onProfileClick={() => setIsSidebarOpen(true)}
+        />
+      </header>
+      
+      <main className="flex-1 w-full max-w-[360px] sm:max-w-[480px] md:max-w-[640px] mx-auto px-3 sm:px-4 pt-3 sm:pt-4 pb-20">
+        <SearchBar onSearch={handleSearch} />
+        <nav aria-label="Product categories">
+          <CategoryFilter
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
+        </nav>
+        <section className="mt-3 sm:mt-4 bg-white rounded-3xl shadow-lg p-3 sm:p-4" aria-label="Product listings">
+          <h2 className="sr-only">Products from {locationTitle || 'selected location'}</h2>          <ProductList 
             products={filteredProducts}
             category={selectedCategory}
-          />      </section>
+            onSelectCategory={setSelectedCategory}
+          />
+        </section>
       </main>
 
       <BottomNavWithMap active="home" isCustomer={!isPOSUser} />

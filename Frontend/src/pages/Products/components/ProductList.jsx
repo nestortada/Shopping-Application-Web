@@ -1,21 +1,33 @@
 import React from 'react';
 import ProductCard from './ProductCard';
 
-export default function ProductList({ products, category }) {
+export default function ProductList({ products, category, onSelectCategory }) {
   const filteredProducts = category === 'All' 
     ? products 
-    : products.filter(product => product.category === category);
-
-  return (
-    <div className="space-y-4">
+    : products.filter(product => product.categoria === category || product.category === category);  return (
+    <div className="space-y-3 sm:space-y-4 w-full" id="product-list">
       {filteredProducts.length > 0 ? (
-        filteredProducts.map(product => (
-          <ProductCard key={product.id} product={product} />
-        ))
+        <ul className="list-none p-0 space-y-3 sm:space-y-4 w-full">
+          {filteredProducts.map(product => (
+            <li key={product.id} className="w-full flex justify-center">
+              <ProductCard product={product} />
+            </li>
+          ))}
+        </ul>
       ) : (
-        <p className="text-center py-6 text-gray-500 font-paprika">
-          {products.length ? 'No hay productos en esta categoría' : 'No hay productos disponibles'}
-        </p>
+        <div className="flex flex-col items-center justify-center py-6 sm:py-8">
+          <p className="text-center text-gray-500 font-paprika text-sm sm:text-base" aria-live="polite">
+            {products.length ? 'No hay productos en esta categoría' : 'No hay productos disponibles'}
+          </p>
+          {products.length > 0 && (
+            <button 
+              onClick={() => category !== 'All' && onSelectCategory('All')}
+              className="mt-3 text-[#5947FF] underline text-sm"
+            >
+              Ver todos los productos
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

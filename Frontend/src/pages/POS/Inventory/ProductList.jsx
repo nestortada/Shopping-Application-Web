@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../../firebase/firebaseConfig';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { getUserProfile } from '../../../services/authService';
 import BottomNav from '../../../components/BottomNav';
 import AddProductModal from './AddProductModal';
+import DeleteProductModal from './DeleteProductModal';
+import UpdateProductModal from './UpdateProductModal';
 import barcodeIcon from '../../../assets/codigo-de-barras.png';
 import deleteIcon from '../../../assets/basura.png';
 import editIcon from '../../../assets/editar.png';
@@ -12,8 +14,13 @@ import editIcon from '../../../assets/editar.png';
 export default function ProductList() {
   const [productos, setProductos] = useState([]);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(true);  
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [collectionName, setCollectionName] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,8 +33,9 @@ export default function ProductList() {
           throw new Error('Acceso no autorizado');
         }
 
-        const collectionName = profile.email.split('@')[0];
-        const snapshot = await getDocs(collection(db, collectionName));
+        const userCollectionName = profile.email.split('@')[0];
+        setCollectionName(userCollectionName);
+        const snapshot = await getDocs(collection(db, userCollectionName));
         const lista = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setProductos(lista);
       } catch (err) {
@@ -39,7 +47,82 @@ export default function ProductList() {
       }
     };
     fetchProductos();
-  }, [navigate]);
+  }, [navigate]);  
+
+  const handleDeleteClick = (product) => {
+    console.log("Producto seleccionado para eliminar:", product);
+    setSelectedProduct(product);
+    setError(''); // Limpiar errores previos
+    setIsDeleteModalOpen(true);
+  };  
+
+  const handleDeleteProduct = async (productId) => {
+    try {
+      console.log("Eliminando producto con ID:", productId);
+      console.log("Nombre de colección:", collectionName);
+      setIsLoading(true);
+      
+      if (!collectionName) {
+        console.error("Nombre de colección no disponible");
+        setError("Error: No se pudo determinar la colección en Firestore");
+        return;
+      }
+      
+      if (!productId) {
+        console.error("ID de producto no válido:", productId);
+        setError("Error: ID de producto no válido");
+        return;
+      }
+      
+      // Eliminar de Firebase
+      const productRef = doc(db, collectionName, productId);
+      console.log("Referencia del producto a eliminar:", `${collectionName}/${productId}`);
+      await deleteDoc(productRef);
+      console.log("Producto eliminado en Firestore con ID:", productId);
+        // Actualizar la lista de productos
+      setProductos(prevProductos => 
+        prevProductos.filter(producto => producto.id !== productId)
+      );
+      
+      // Mostrar mensaje de éxito
+      setSuccess('Producto eliminado correctamente');
+      setTimeout(() => setSuccess(''), 3000); // Desaparece después de 3 segundos
+      
+    } catch (err) {
+      console.error('Error al eliminar producto:', err);
+      setError('Error al eliminar el producto. Intente nuevamente.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditClick = (product) => {
+    console.log("Producto seleccionado para editar:", product);
+    setSelectedProduct(product);
+    setError(''); // Limpiar errores previos
+    setIsUpdateModalOpen(true);
+  };
+
+  const handleUpdateProduct = (productId, updatedProduct) => {
+    try {
+      console.log("Actualizando producto con ID:", productId);
+      
+      // Actualizar la lista de productos en el estado
+      setProductos(prevProductos => 
+        prevProductos.map(producto => 
+          producto.id === productId ? { ...producto, ...updatedProduct } : producto
+        )
+      );
+      
+      // Mostrar mensaje de éxito
+      setSuccess('Producto actualizado correctamente');
+      setTimeout(() => setSuccess(''), 3000); // Desaparece después de 3 segundos
+      
+    } catch (err) {
+      console.error('Error al actualizar producto en la UI:', err);
+      setError('Error al actualizar el producto en la interfaz.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -67,14 +150,18 @@ export default function ProductList() {
         </header>
 
         {/* Main Content */}
-        <main className="px-4 py-6">
+        <main className="px-4 py-6">          
           {isLoading ? (
             <div className="flex justify-center items-center py-10">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1D1981]"></div>
             </div>
           ) : error ? (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert">
               <p>{error}</p>
+            </div>
+          ) : success ? (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4" role="alert">
+              <p>{success}</p>
             </div>
           ) : (
             <section className="bg-white rounded-lg shadow-sm">
@@ -109,12 +196,15 @@ export default function ProductList() {
                         <button 
                           className="p-1.5 hover:bg-gray-100 rounded-full transition-colors" 
                           aria-label="Editar producto"
+                          onClick={() => handleEditClick(producto)}
                         >
                           <img src={editIcon} alt="Editar" className="w-5 h-5" />
-                        </button>
+                        </button>                        
                         <button 
+                          type="button"
                           className="p-1.5 hover:bg-gray-100 rounded-full transition-colors" 
                           aria-label="Eliminar producto"
+                          onClick={() => handleDeleteClick(producto)}
                         >
                           <img src={deleteIcon} alt="Eliminar" className="w-5 h-5" />
                         </button>
@@ -132,13 +222,24 @@ export default function ProductList() {
             className="fixed bottom-24 right-6 w-14 h-14 bg-[#1D1981] hover:bg-[#2d2991] rounded-full flex items-center justify-center shadow-lg transition-colors"
             aria-label="Agregar producto"
           >
-            <span className="text-white text-3xl">+</span>
+            <span className="text-white text-3xl">+</span>          
           </button>
         </main>
       </div>
-
-      {/* Modal */}
-      <AddProductModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      
+      {/* Modals */}      <AddProductModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <DeleteProductModal 
+        isOpen={isDeleteModalOpen} 
+        onClose={() => setIsDeleteModalOpen(false)} 
+        product={selectedProduct} 
+        onConfirmDelete={handleDeleteProduct} 
+      />
+      <UpdateProductModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        product={selectedProduct}
+        onUpdateSuccess={handleUpdateProduct}
+      />
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
