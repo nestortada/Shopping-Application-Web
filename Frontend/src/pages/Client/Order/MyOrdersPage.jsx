@@ -4,18 +4,48 @@ import { useOrderContext } from '../../../context/OrderContext';
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
-  const { orders, loading, error, getUserOrders } = useOrderContext();
+  const { orders, loading, error, getUserOrders, getPendingOrders } = useOrderContext();
   const [userEmail, setUserEmail] = useState('');
-
+  const [isUnisabanaUser, setIsUnisabanaUser] = useState(false);
+  const [activeTab, setActiveTab] = useState('all'); // 'all' or 'pending'
+  const [pendingOrders, setPendingOrders] = useState([]);
   useEffect(() => {
     // Get user email from local storage
     const email = localStorage.getItem('userEmail');
     setUserEmail(email);
     
-    if (email) {
-      getUserOrders(email).catch(console.error);
+    // Check if user is from Unisabana
+    if (email && email.endsWith('@unisabana.edu.co')) {
+      setIsUnisabanaUser(true);
     }
-  }, [getUserOrders]);
+    
+    if (email) {
+      // Load orders
+      const loadOrders = async () => {
+        try {
+          const allOrders = await getUserOrders(email);
+          
+          // If the user is from Unisabana, also handle pending orders
+          if (email.endsWith('@unisabana.edu.co')) {
+            // Filter pending orders directly rather than making a separate call
+            const pendingOrdersData = allOrders.filter(order => 
+              order.orderStatus !== 'Ready for pickup' && 
+              order.orderStatus !== 'Completed' &&
+              order.orderStatus !== 'Cancelled'
+            );
+            setPendingOrders(pendingOrdersData);
+          }
+        } catch (error) {
+          console.error("Error loading orders:", error);
+        }
+      };
+      
+      loadOrders();
+    }
+  }, []);
+
+  // Filter orders based on active tab
+  const displayedOrders = activeTab === 'pending' ? pendingOrders : orders;
 
   const handleOrderClick = (orderId) => {
     // Navigate to order details page
@@ -104,14 +134,36 @@ export default function MyOrdersPage() {
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             <p>{error}</p>
           </div>
-        )}
+        )}        {/* Tabs for order filtering */}
+        <div className="flex space-x-4 mb-4">
+          <button 
+            onClick={() => setActiveTab('all')}
+            className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center 
+            ${activeTab === 'all' ? 'bg-[#3822B4] text-white' : 'bg-gray-100 text-gray-800'}`}
+          >
+            Todos los pedidos
+          </button>
+          {isUnisabanaUser && (
+            <button 
+              onClick={() => setActiveTab('pending')}
+              className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center 
+              ${activeTab === 'pending' ? 'bg-[#3822B4] text-white' : 'bg-gray-100 text-gray-800'}`}
+            >
+              Pedidos pendientes
+            </button>
+          )}
+        </div>
 
-        {!loading && orders.length === 0 ? (
+        {(!loading && displayedOrders.length === 0) ? (
           <div className="flex flex-col items-center justify-center h-64">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <p className="text-gray-600 text-center">No tienes pedidos todavía</p>
+            <p className="text-gray-600 text-center">
+              {activeTab === 'pending' 
+                ? 'No tienes pedidos pendientes' 
+                : 'No tienes pedidos todavía'}
+            </p>
             <button 
               onClick={() => navigate('/')}
               className="mt-4 bg-[#3822B4] text-white py-2 px-4 rounded-lg"
@@ -121,9 +173,11 @@ export default function MyOrdersPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Historial de Pedidos</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              {activeTab === 'pending' ? 'Pedidos Pendientes' : 'Historial de Pedidos'}
+            </h2>
             
-            {orders.map((order) => (
+            {displayedOrders.map((order) => (
               <div 
                 key={order.id} 
                 className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUserProfile } from '../services/authService'; // Asegúrate de que esta función esté configurada correctamente
+import { useOrderContext } from '../context/OrderContext';
 import Button from './Button';
 import profileIcon from '../assets/usuario.png';
 import logoutIcon from '../assets/logout.png';
@@ -9,9 +10,12 @@ export default function UserDashboard({ onClose }) {
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingOrders, setPendingOrders] = useState([]);
+  const [showPendingOrders, setShowPendingOrders] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'pending'
   const navigate = useNavigate();
-
-  useEffect(() => {
+  const { getUserOrders } = useOrderContext();
+    useEffect(() => {
     async function fetchUserProfile() {
       try {
         setIsLoading(true);
@@ -23,6 +27,12 @@ export default function UserDashboard({ onClose }) {
 
         const profile = await getUserProfile(token); // Se pasa el token aquí
         setUser(profile);
+        
+        // Check if user is from Unisabana
+        if (profile && profile.email && profile.email.endsWith('@unisabana.edu.co')) {
+          // Fetch pending orders for Unisabana users
+          fetchPendingOrders(profile.email);
+        }
       } catch (err) {
         setError('Error al cargar el perfil: ' + err.message);
         console.error(err);
@@ -33,7 +43,35 @@ export default function UserDashboard({ onClose }) {
 
     fetchUserProfile();
   }, [navigate]);
-
+    // Function to fetch pending orders
+  const fetchPendingOrders = async (email) => {
+    if (!email) return;
+    
+    try {
+      console.log("Fetching orders for:", email);
+      const allOrders = await getUserOrders(email);
+      console.log("Orders fetched:", allOrders.length);
+      
+      // Filter pending orders (not 'Ready for pickup' or 'Completed')
+      const pending = allOrders.filter(order => 
+        order.orderStatus !== 'Ready for pickup' && 
+        order.orderStatus !== 'Completed' &&
+        order.orderStatus !== 'Cancelled'
+      );
+      
+      console.log("Pending orders:", pending.length);
+      setPendingOrders(pending);
+      
+      // Show pending orders section if there are any
+      if (pending.length > 0) {
+        setShowPendingOrders(true);
+      } else {
+        setShowPendingOrders(false);
+      }
+    } catch (err) {
+      console.error('Error fetching pending orders:', err);
+    }
+  };
   const handleLogout = () => {
     localStorage.clear();
     navigate('/', { replace: true });
@@ -46,7 +84,45 @@ export default function UserDashboard({ onClose }) {
       onClose();
     }
   };
-
+  
+  const handleOrderClick = (orderId) => {
+    // Navigate to order details page
+    navigate(`/client/order/status?id=${orderId}`);
+    onClose();
+  };
+  
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'N/A';
+    
+    // Convert to date if it's a timestamp
+    const date = typeof timestamp === 'object' ? timestamp : new Date(timestamp);
+    
+    return date.toLocaleString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
+  // Function to translate order status to Spanish
+  const translateStatus = (status) => {
+    switch(status) {
+      case 'Confirmed':
+        return 'Confirmado';
+      case 'In preparation':
+        return 'En preparación';
+      case 'Ready for pickup':
+        return 'Listo para recoger';
+      case 'Completed':
+        return 'Completado';
+      case 'Cancelled':
+        return 'Cancelado';
+      default:
+        return status;
+    }
+  };
   const getUsernameFromEmail = (email) => {
     return email ? email.split('@')[0] : '';
   };
@@ -58,6 +134,9 @@ export default function UserDashboard({ onClose }) {
       minimumFractionDigits: 0
     }).format(balance || 0);
   };
+
+  // Add "Pendientes" menu item for Unisabana users
+  const isUnisabanaUser = user?.email?.endsWith('@unisabana.edu.co');
 
   const menuItems = user?.role === 'Perfil POS' 
     ? [
@@ -139,9 +218,7 @@ export default function UserDashboard({ onClose }) {
         <p className="text-lg font-bold">
           Saldo: {formatBalance(user.balance)}
         </p>
-      </div>
-
-      {/* Menu Items */}
+      </div>      {/* Menu Items */}
       <nav className="flex-1">
         <ul className="space-y-3">
           {menuItems.map((item) => (
@@ -156,6 +233,60 @@ export default function UserDashboard({ onClose }) {
           ))}
         </ul>
       </nav>
+      
+      {/* Tabs for Profile and Pending Orders */}
+      <div className="flex space-x-4 mb-6">
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`flex-1 py-3 rounded-lg font-semibold transition-all ${
+            activeTab === 'profile' ? 'bg-[#2C1DBA] text-white' : 'bg-transparent text-[#D1D5DB]'
+          }`}
+        >
+          Perfil
+        </button>
+        <button
+          onClick={() => setActiveTab('pending')}
+          className={`flex-1 py-3 rounded-lg font-semibold transition-all ${
+            activeTab === 'pending' ? 'bg-[#2C1DBA] text-white' : 'bg-transparent text-[#D1D5DB]'
+          }`}
+        >
+          Pendientes
+        </button>
+      </div>
+
+      {/* Pending Orders Section for Unisabana Users */}
+      {isUnisabanaUser && activeTab === 'pending' && showPendingOrders && pendingOrders.length > 0 && (
+        <div className="mt-6 bg-[#2C1DBA] p-4 rounded-lg">
+          <h3 className="text-white font-bold mb-3">Pedidos Pendientes</h3>
+          <div className="space-y-3 max-h-48 overflow-y-auto pr-2">
+            {pendingOrders.map((order) => (
+              <div 
+                key={order.id}
+                onClick={() => handleOrderClick(order.id)}
+                className="bg-[#3F2EDA] hover:bg-[#4A38E2] p-3 rounded-lg cursor-pointer transition-colors"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-white font-semibold">#{order.orderNumber}</span>
+                    <p className="text-white text-sm">{order.restaurantName}</p>
+                  </div>
+                  <span className="text-xs bg-white text-[#3F2EDA] px-2 py-1 rounded-full font-medium">
+                    {translateStatus(order.orderStatus)}
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <p className="text-white text-xs">
+                    <span className="opacity-75">Hora estimada:</span> {order.estimatedTime || 'No disponible'}
+                  </p>
+                  <p className="text-white text-sm font-semibold mt-1">
+                    Total: ${order.totalAmount}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Logout Button */}
       <button

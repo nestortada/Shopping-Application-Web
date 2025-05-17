@@ -24,6 +24,7 @@ export default function CartPage() {
     clearCart
   } = useCartContext();
   const { cards, fetchCards, loading: cardsLoading } = useCardContext();
+  const { createOrder } = useOrderContext(); // Import createOrder from OrderContext
   const [userRole, setUserRole] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -38,7 +39,7 @@ export default function CartPage() {
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [installments, setInstallments] = useState(1);
-  const [userBalance, setUserBalance] = useState(50000); // Saldo simulado del usuario  // Detectar el rol del usuario basado en el dominio de email
+  const [userBalance, setUserBalance] = useState(50000); // Saldo simulado del usuario// Detectar el rol del usuario basado en el dominio de email
   useEffect(() => {
     const userEmail = localStorage.getItem('userEmail');
     let locationId = localStorage.getItem('selectedLocationId');
@@ -442,20 +443,46 @@ export default function CartPage() {
         // Generate a unique order number
         const orderNumber = Math.floor(10000 + Math.random() * 90000); // 5-digit number
         
-        // Save order data to localStorage for non-context usage
-        localStorage.setItem('orderNumber', orderNumber.toString());
-        localStorage.setItem('orderStatus', 'Confirmed');
-        localStorage.setItem('orderTimestamp', now.toISOString());
-        localStorage.setItem('estimatedPickupTime', formattedTime);
-        localStorage.setItem('restaurantName', restaurantName);
-        localStorage.setItem('totalAmount', getTotalPrice().toString());
-        localStorage.setItem('paymentMethod', 'tarjeta');
+        // Create order data object
+        const orderData = {
+          orderNumber: orderNumber,
+          userEmail: userEmail,
+          orderStatus: 'Confirmed',
+          orderTimestamp: now,
+          estimatedTime: formattedTime,
+          restaurantName: restaurantName,
+          totalAmount: getTotalPrice() - (couponApplied ? discount : 0),
+          paymentMethod: 'tarjeta',
+          products: orderProducts,
+          locationId: locationId
+        };
         
-        // Clear the cart
-        clearCart();
-        
-        // Redirect to the order status page
-        navigate('/client/order/status');
+        // Save order to Firestore using imported createOrder function
+        try {
+          const newOrder = await createOrder(orderData);
+          
+          // Save order data to localStorage for non-context usage
+          localStorage.setItem('orderNumber', orderNumber.toString());
+          localStorage.setItem('orderStatus', 'Confirmed');
+          localStorage.setItem('orderTimestamp', now.toISOString());
+          localStorage.setItem('estimatedPickupTime', formattedTime);
+          localStorage.setItem('restaurantName', restaurantName);
+          localStorage.setItem('totalAmount', getTotalPrice().toString());
+          localStorage.setItem('paymentMethod', 'tarjeta');
+          localStorage.setItem('currentOrderId', newOrder.id);
+          
+          // Clear the cart
+          clearCart();
+          
+          // Redirect to the order status page
+          navigate('/client/order/status');
+        } catch (error) {
+          console.error('Error saving order to Firestore:', error);
+          setIsDrawerOpen(false);
+          setModalTitle('Error');
+          setModalMessage('Error al guardar el pedido. Por favor, intenta nuevamente.');
+          setIsModalOpen(true);
+        }
         return;
       } else {
         // For non-unisabana users, show success modal
@@ -547,20 +574,46 @@ export default function CartPage() {
         // Generate a unique order number
         const orderNumber = Math.floor(10000 + Math.random() * 90000); // 5-digit number
         
-        // Save order data to localStorage for non-context usage
-        localStorage.setItem('orderNumber', orderNumber.toString());
-        localStorage.setItem('orderStatus', 'Confirmed');
-        localStorage.setItem('orderTimestamp', now.toISOString());
-        localStorage.setItem('estimatedPickupTime', formattedTime);
-        localStorage.setItem('restaurantName', restaurantName);
-        localStorage.setItem('totalAmount', getTotalPrice().toString());
-        localStorage.setItem('paymentMethod', 'saldo');
+        // Create order data object
+        const orderData = {
+          orderNumber: orderNumber,
+          userEmail: userEmail,
+          orderStatus: 'Confirmed',
+          orderTimestamp: now,
+          estimatedTime: formattedTime,
+          restaurantName: restaurantName,
+          totalAmount: getTotalPrice() - (couponApplied ? discount : 0),
+          paymentMethod: 'saldo',
+          products: orderProducts,
+          locationId: locationId
+        };
         
-        // Clear the cart
-        clearCart();
-        
-        // Redirect to the order status page
-        navigate('/client/order/status');
+        // Save order to Firestore using imported createOrder function
+        try {
+          const newOrder = await createOrder(orderData);
+          
+          // Save order data to localStorage for non-context usage
+          localStorage.setItem('orderNumber', orderNumber.toString());
+          localStorage.setItem('orderStatus', 'Confirmed');
+          localStorage.setItem('orderTimestamp', now.toISOString());
+          localStorage.setItem('estimatedPickupTime', formattedTime);
+          localStorage.setItem('restaurantName', restaurantName);
+          localStorage.setItem('totalAmount', getTotalPrice().toString());
+          localStorage.setItem('paymentMethod', 'saldo');
+          localStorage.setItem('currentOrderId', newOrder.id);
+          
+          // Clear the cart
+          clearCart();
+          
+          // Redirect to the order status page
+          navigate('/client/order/status');
+        } catch (error) {
+          console.error('Error saving order to Firestore:', error);
+          setIsDrawerOpen(false);
+          setModalTitle('Error');
+          setModalMessage('Error al guardar el pedido. Por favor, intenta nuevamente.');
+          setIsModalOpen(true);
+        }
         return;
       } else {
         // For non-unisabana users, show success modal

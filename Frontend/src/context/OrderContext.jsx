@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { db } from '../firebase/firebaseConfig';
 import { collection, addDoc, doc, getDoc, updateDoc, query, where, getDocs, orderBy } from 'firebase/firestore';
 
@@ -45,36 +45,6 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  // Get an order by ID
-  const getOrderById = async (orderId) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const orderDoc = await getDoc(doc(db, 'orders', orderId));
-      
-      if (orderDoc.exists()) {
-        const orderData = {
-          id: orderDoc.id,
-          ...orderDoc.data(),
-          orderTimestamp: orderDoc.data().orderTimestamp?.toDate() || new Date(),
-        };
-        
-        setCurrentOrder(orderData);
-        return orderData;
-      } else {
-        setError('Order not found');
-        return null;
-      }
-    } catch (err) {
-      console.error('Error fetching order:', err);
-      setError('Failed to fetch order. Please try again.');
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Update order status
   const updateOrderStatus = async (orderId, newStatus) => {
     setLoading(true);
@@ -109,14 +79,49 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  // Get orders for current user
-  const getUserOrders = async (userEmail) => {
+  // Get an order by ID - using useCallback to prevent unnecessary re-renders
+  const getOrderById = useCallback(async (orderId) => {
+    if (!orderId) return null;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log("Getting order by ID:", orderId);
+      const orderDoc = await getDoc(doc(db, 'orders', orderId));
+      
+      if (orderDoc.exists()) {
+        const orderData = {
+          id: orderDoc.id,
+          ...orderDoc.data(),
+          orderTimestamp: orderDoc.data().orderTimestamp?.toDate() || new Date(),
+        };
+        
+        setCurrentOrder(orderData);
+        return orderData;
+      } else {
+        console.log("Order not found with ID:", orderId);
+        setError('Order not found');
+        return null;
+      }
+    } catch (err) {
+      console.error('Error fetching order:', err);
+      setError('Failed to fetch order. Please try again.');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Get orders for current user - using useCallback
+  const getUserOrders = useCallback(async (userEmail) => {
     if (!userEmail) return [];
     
     setLoading(true);
     setError(null);
     
     try {
+      console.log("Getting orders for user:", userEmail);
       const ordersQuery = query(
         collection(db, 'orders'),
         where('userEmail', '==', userEmail),
@@ -132,6 +137,7 @@ export const OrderProvider = ({ children }) => {
       }));
       
       setOrders(userOrders);
+      console.log("Retrieved orders:", userOrders.length);
       return userOrders;
     } catch (err) {
       console.error('Error fetching user orders:', err);
@@ -140,15 +146,38 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+  
+  // Get pending orders for current user - using useCallback
+  const getPendingOrders = useCallback(async (userEmail) => {
+    if (!userEmail) return [];
+    
+    try {
+      const allOrders = await getUserOrders(userEmail);
+      
+      // Filter pending orders
+      const pendingOrders = allOrders.filter(order => 
+        order.orderStatus !== 'Ready for pickup' && 
+        order.orderStatus !== 'Completed' &&
+        order.orderStatus !== 'Cancelled'
+      );
+      
+      console.log("Pending orders:", pendingOrders.length);
+      return pendingOrders;
+    } catch (err) {
+      console.error('Error fetching pending orders:', err);
+      setError('Failed to fetch your pending orders. Please try again.');
+      return [];
+    }
+  }, [getUserOrders]);
 
+  // Check for current order in localStorage when component mounts
   useEffect(() => {
-    // Check for current order in localStorage when component mounts
     const currentOrderId = localStorage.getItem('currentOrderId');
     if (currentOrderId) {
       getOrderById(currentOrderId).catch(console.error);
     }
-  }, []);
+  }, [getOrderById]);
 
   return (
     <OrderContext.Provider
@@ -161,6 +190,7 @@ export const OrderProvider = ({ children }) => {
         getOrderById,
         updateOrderStatus,
         getUserOrders,
+        getPendingOrders,
         setCurrentOrder,
       }}
     >

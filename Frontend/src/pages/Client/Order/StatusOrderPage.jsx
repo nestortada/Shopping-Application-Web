@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useOrderContext } from '../../../context/OrderContext';
 
 export default function StatusOrderPage() {
   const navigate = useNavigate();
-  const { currentOrder, loading, error } = useOrderContext();
+  const location = useLocation();
+  const { currentOrder, loading, error, getOrderById } = useOrderContext();
   const [orderStatus, setOrderStatus] = useState('Confirmed'); // Default status
   const [estimatedPickupTime, setEstimatedPickupTime] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
@@ -17,9 +18,23 @@ export default function StatusOrderPage() {
     { label: 'Listo para recoger', value: 'Ready for pickup' }
   ];
 
+  // Get the order ID from the URL query parameter
   useEffect(() => {
-    // If we have a current order, use its data
+    const queryParams = new URLSearchParams(location.search);
+    const orderId = queryParams.get('id');
+    
+    if (orderId) {
+      console.log("Fetching order by ID:", orderId);
+      getOrderById(orderId).catch(err => {
+        console.error("Error fetching order by ID:", err);
+      });
+    }
+  }, [location.search, getOrderById]);
+
+  // Update UI when current order changes
+  useEffect(() => {
     if (currentOrder) {
+      console.log("Current order updated:", currentOrder);
       setOrderStatus(currentOrder.orderStatus);
       setEstimatedPickupTime(currentOrder.estimatedTime);
       setRestaurantName(currentOrder.restaurantName);
@@ -28,6 +43,7 @@ export default function StatusOrderPage() {
       const stepIndex = steps.findIndex(step => step.value === currentOrder.orderStatus);
       setCurrentStep(stepIndex >= 0 ? stepIndex : 0);
     } else {
+      console.log("No current order, using localStorage");
       // If no order in context, try to get from localStorage
       const orderStatus = localStorage.getItem('orderStatus');
       const estimatedTime = localStorage.getItem('estimatedPickupTime');
@@ -43,24 +59,13 @@ export default function StatusOrderPage() {
         setCurrentStep(stepIndex >= 0 ? stepIndex : 0);
       }
     }
-
-    // Simulate order status progression
-    const timer = setTimeout(() => {
-      if (currentStep < steps.length - 1) {
-        const newStep = currentStep + 1;
-        setCurrentStep(newStep);
-        setOrderStatus(steps[newStep].value);
-        
-        // Also update localStorage
-        localStorage.setItem('orderStatus', steps[newStep].value);
-      }
-    }, 30000); // Change status every 30 seconds for simulation
-
-    return () => clearTimeout(timer);
-  }, [currentOrder, currentStep]);
+  }, [currentOrder, steps]);
 
   const handleBackToHome = () => {
-    navigate('/');
+    // Get the location ID from localStorage
+    const locationId = localStorage.getItem('locationId');
+    // Navigate to products page with the location ID
+    navigate(`/products/${locationId}`);
   };
 
   if (loading) {
