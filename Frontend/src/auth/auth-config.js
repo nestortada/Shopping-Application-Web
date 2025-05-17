@@ -12,9 +12,10 @@ import { LogLevel } from '@azure/msal-browser';
 */
 export const msalConfig = {
     auth: {
+      // Placeholder values - MSAL initialization will be skipped if these haven't been replaced
       clientId: 'TU_CLIENT_ID',
       authority: 'https://login.microsoftonline.com/TU_TENANT_ID/',
-      redirectUri: window.location.origin + '/redirect',      // ← así no hardcodeas localhost
+      redirectUri: window.location.origin + '/redirect',
       postLogoutRedirectUri: window.location.origin + '/',
       navigateToLoginRequestUrl: false,
     },
