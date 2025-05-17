@@ -9,19 +9,57 @@ import ProductCard from './components/ProductCard';
 export default function FavoritesPage() {
   const { favorites, loading, error, fetchFavorites } = useFavorites();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState('name'); // Default sort by name
+  const itemsPerPage = 5; // Number of favorites to show per page
   const navigate = useNavigate();
+  
+  // Sort favorites based on selected criteria
+  const sortedFavorites = [...favorites].sort((a, b) => {
+    switch (sortBy) {
+      case 'name':
+        return (a.productName || a.name || '').localeCompare(b.productName || b.name || '');
+      case 'price':
+        return (a.productPrice || a.price || 0) - (b.productPrice || b.price || 0);
+      case 'restaurant':
+        return (a.locationName || '').localeCompare(b.locationName || '');
+      case 'date':
+        // Convert date strings to Date objects for comparison
+        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+        return dateB - dateA; // Newest first      default:
+        return 0;
+    }
+  });
+
   useEffect(() => {
-    // Check if user is logged in
+    // Check if user is logged in using JWT token
     const token = localStorage.getItem('token');
-    if (!token) {
+    const userEmail = localStorage.getItem('userEmail');
+    
+    if (!token || !userEmail) {
       navigate('/login', { state: { from: '/favorites' } });
       return;
     }
     
-    // Fetch favorites when component mounts
+    // Don't show favorites page for POS users
+    if (userEmail.endsWith('@sabanapos.edu.co')) {
+      navigate('/products');
+      return;
+    }
+    
+    // Fetch favorites when component mounts and user is authenticated
     fetchFavorites();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]); // Remove fetchFavorites from dependencies
+    
+    // Set up an interval to refresh favorites every 30 seconds
+    const intervalId = setInterval(() => {
+      fetchFavorites();
+    }, 30000);
+    
+    // Clean up the interval when component unmounts
+    return () => clearInterval(intervalId);
+    
+  }, [navigate, fetchFavorites]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FBFBFA] relative">
@@ -52,9 +90,25 @@ export default function FavoritesPage() {
         />
       </header>
       
-      <main className="flex-1 w-full max-w-[360px] sm:max-w-[480px] md:max-w-[640px] mx-auto px-3 sm:px-4 pt-3 sm:pt-4 pb-20">
-        <div className="mx-auto w-[255px] h-[30px] bg-[#FEE9E7] text-[#B68E59] py-1 rounded-[24px] shadow-md mb-4 text-center font-paprika text-xl">
-          Mis Favoritos
+      <main className="flex-1 w-full max-w-[360px] sm:max-w-[480px] md:max-w-[640px] mx-auto px-3 sm:px-4 pt-3 sm:pt-4 pb-20">        <div className="mx-auto w-[255px] h-[30px] bg-[#FEE9E7] text-[#B68E59] py-1 rounded-[24px] shadow-md mb-4 text-center font-paprika text-xl">
+          Mis Favoritos        </div>        
+        {/* Sorting options */}
+        <div className="flex items-center mb-3">
+          <label htmlFor="sort-by" className="text-sm text-gray-600 mr-2">Ordenar por:</label>
+          <select
+            id="sort-by"
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+              setCurrentPage(1); // Reset to first page when sorting changes
+            }}
+            className="text-sm border rounded-md px-2 py-1 bg-white"
+          >
+            <option value="name">Nombre</option>
+            <option value="price">Precio</option>
+            <option value="restaurant">Restaurante</option>
+            <option value="date">Más recientes</option>
+          </select>
         </div>
 
         <section className="mt-3 sm:mt-4" aria-label="Favorited products">
@@ -68,42 +122,92 @@ export default function FavoritesPage() {
           ) : error ? (
             <div className="text-red-500 p-4 text-center bg-white rounded-3xl shadow-lg" aria-live="assertive" role="alert">
               {error}
-            </div>
-          ) : favorites.length === 0 ? (
+            </div>          ) : favorites.length === 0 ? (
             <div className="text-center py-8 bg-white rounded-3xl shadow-lg">
               <p className="text-gray-500 font-paprika mb-4">
                 No tienes productos favoritos todavía
               </p>
               <button 
-                onClick={() => navigate('/products')}
+                onClick={() => {
+                  // Check if user is authenticated - similar to Add to Cart in FoodPage
+                  const token = localStorage.getItem('token');
+                  
+                  if (!token) {
+                    // Store the intended redirect location
+                    localStorage.setItem('redirectAfterLogin', '/products');
+                    // Redirect to login
+                    navigate('/');
+                    return;
+                  }
+                  
+                  // Try to extract a restaurant from recent favorites or default to main products page
+                  const recentFavorite = favorites[0]; // We shouldn't get here if there are favorites, but check anyway
+                  
+                  if (recentFavorite && recentFavorite.locationId && recentFavorite.locationId !== 'default') {
+                    navigate(`/products/${recentFavorite.locationId}`);
+                  } else {
+                    navigate('/products');
+                  }
+                }}
                 className="bg-[#5947FF] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#4937e0] transition-colors"
               >
                 Explorar productos
               </button>
-            </div>
-          ) : (
-            <ul className="list-none p-0 space-y-3 sm:space-y-4 w-full">              {favorites.map(product => (
-                <li key={product.id} className="w-full flex justify-center">
+            </div>) : (
+            <ul className="list-none p-0 space-y-3 sm:space-y-4 w-full">
+              {sortedFavorites
+                .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                .map(product => (
+                <li key={product.id || product.productId} className="w-full flex justify-center">
                   <ProductCard 
                     product={{
-                      ...product,
-                      // Ensure essential properties are present
-                      id: product.id,
-                      name: product.name || product.nombre || 'Product',
-                      description: product.description || product.descripcion || '',
-                      price: product.price || product.precio || 0,
-                      imageUrl: product.imageUrl || product.imagenURL || null
+                      id: product.id || product.productId,
+                      name: product.name || product.productName || product.nombre || 'Product',
+                      description: product.description || product.productDescription || product.descripcion || '',
+                      price: product.price || product.productPrice || product.precio || 0,
+                      imageUrl: product.imageUrl || product.productImage || product.imagenURL || null,
+                      locationId: product.locationId || 'default',
+                      locationName: product.locationName || 'Unknown Restaurant'
                     }} 
                     locationId={product.locationId || 'default'} 
                   />
                 </li>
               ))}
+                {/* Pagination controls */}
+              {sortedFavorites.length > itemsPerPage && (
+                <li className="flex justify-center mt-4">
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className={`px-3 py-1 rounded-md ${
+                        currentPage === 1 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-[#3F2EDA] text-white hover:bg-[#3022A0]'
+                      }`}
+                    >
+                      Anterior
+                    </button>
+                    <span className="px-3 py-1 bg-gray-100 rounded-md">
+                      Página {currentPage} de {Math.ceil(sortedFavorites.length / itemsPerPage)}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(sortedFavorites.length / itemsPerPage)))}
+                      disabled={currentPage >= Math.ceil(sortedFavorites.length / itemsPerPage)}
+                      className={`px-3 py-1 rounded-md ${
+                        currentPage >= Math.ceil(sortedFavorites.length / itemsPerPage)
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                          : 'bg-[#3F2EDA] text-white hover:bg-[#3022A0]'
+                      }`}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                </li>
+              )}
             </ul>
           )}
-        </section>
-      </main>
-
-      <BottomNavWithMap active="favorites" isCustomer={true} />
+        </section>      </main>      <BottomNavWithMap active="favorites" isCustomer={true} />
     </div>
   );
 }

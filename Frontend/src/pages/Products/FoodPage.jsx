@@ -10,11 +10,10 @@ import TopBar from './components/TopBar';
 import BottomNavWithMap from './components/BottomNavWithMap';
 import UserDashboard from '../../components/UserDashboard';
 
-export default function FoodPage() {
-  const { locationId, productId } = useParams();
+export default function FoodPage() {  const { locationId, productId } = useParams();
   const navigate = useNavigate();
   const { addToCart, cartItemsCount } = useCartContext();
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const { isFavorite, toggleFavorite, isFavoritingAllowed } = useFavorites();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,12 +24,22 @@ export default function FoodPage() {
   const [isPOSUser, setIsPOSUser] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [locationTitle, setLocationTitle] = useState('');
-  const [showAddedToCart, setShowAddedToCart] = useState(false);
+  const [showAddedToCart, setShowAddedToCart] = useState(false);  const [canUseFavorites, setCanUseFavorites] = useState(true);
+  
   // Effect to check if user is POS user and get location title
   useEffect(() => {
     const userEmail = localStorage.getItem('userEmail');
+    console.log("FoodPage checking user permissions for:", userEmail);
+    
     if (userEmail?.endsWith('@sabanapos.edu.co')) {
+      console.log("User is a POS user, disabling favorites");
       setIsPOSUser(true);
+      setCanUseFavorites(false);
+    } else {
+      // Check if the user is allowed to use favorites
+      const allowed = isFavoritingAllowed(userEmail);
+      console.log("Can user use favorites?", allowed);
+      setCanUseFavorites(allowed);
     }
     
     // Set location title if it's in localStorage
@@ -49,7 +58,7 @@ export default function FoodPage() {
         console.error('Error parsing locations from localStorage:', e);
       }
     }
-  }, [locationId]);
+  }, [locationId, isFavoritingAllowed]);
 
   // Fetch product details and ratings
   useEffect(() => {
@@ -265,26 +274,65 @@ export default function FoodPage() {
               aria-label="Volver"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            {/* Favorite button */}
-            <button 
-              className="absolute top-4 right-4 z-10 w-[36px] h-[30px] bg-[#FAF202] shadow-md rounded-tl-[10px] rounded-tr-[10px] rounded-bl-[10px] flex items-center justify-center"
-              onClick={() => toggleFavorite({...product, id: productId, locationId})}
-              aria-label={isFavorite(productId) ? "Remove from favorites" : "Add to favorites"}
-            >
-              {isFavorite(productId) ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600 animate-heart-beat" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                </svg>
-              )}
-            </button>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />              </svg>
+            </button>              {/* Favorite button - only show if user is allowed to use favorites */}
+            {canUseFavorites && (              <button 
+                className="absolute top-4 right-4 z-10 w-[36px] h-[30px] bg-[#FAF202] shadow-md rounded-tl-[10px] rounded-tr-[10px] rounded-bl-[10px] flex items-center justify-center"                onClick={() => {
+                  const userEmail = localStorage.getItem('userEmail');
+                  console.log("Favorite button clicked by user:", userEmail);
+                  if (!userEmail) {
+                    // Redirect to login if not logged in
+                    console.log("No user email found, redirecting to login");
+                    localStorage.setItem('redirectAfterLogin', `/products/${locationId}`);
+                    navigate('/');
+                    return;
+                  }
+                  
+                  // Extract restaurant name from URL and locationTitle
+                  let restaurantName = locationTitle;
+                  
+                  // If locationTitle is empty, try to extract from URL
+                  if (!restaurantName) {
+                    const urlParts = window.location.pathname.split('/').filter(Boolean);
+                    if (urlParts.length >= 2) {
+                      if (urlParts[0] === 'food' && urlParts.length >= 2) {
+                        restaurantName = urlParts[1];
+                      } else if (urlParts[0] === 'products' && urlParts.length >= 2) {
+                        restaurantName = urlParts[1];
+                      }
+                    }
+                    
+                    // Try another approach if URL parsing didn't work
+                    if (!restaurantName && window.location.href.includes('/food/')) {
+                      const match = window.location.href.match(/\/food\/([^/]+)/);
+                      if (match && match[1]) {
+                        restaurantName = match[1];
+                      }
+                    }
+                  }
+                  
+                  console.log("Toggling favorite for product:", productId, "Location:", locationId, "Restaurant:", restaurantName);
+                  toggleFavorite({
+                    ...product, 
+                    id: productId, 
+                    locationId, 
+                    locationName: restaurantName || locationTitle,
+                    userEmail: userEmail // Include user email explicitly
+                  });
+                }}
+                aria-label={isFavorite(productId) ? "Remove from favorites" : "Add to favorites"}
+              >
+                {isFavorite(productId) ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600 animate-heart-beat" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+            )}
             
             <img 
               src={product.imagenURL || product.imageUrl || `https://placehold.co/640x360/CFCFCF/FFF?text=${product.nombre?.charAt(0) || 'P'}`}
