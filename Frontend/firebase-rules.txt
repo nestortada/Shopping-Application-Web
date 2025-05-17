@@ -1,4 +1,4 @@
-// Firestore Rules for Favorites
+// Firestore Rules for Favorites and Cards
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -12,6 +12,20 @@ service cloud.firestore {
     function isUserSpecificData() {
       return resource.data.userEmail == request.auth.token.email || 
              resource.data.userEmail == request.resource.data.userEmail;
+    }
+    
+    // Function to check if user email belongs to the allowed domain for card management
+    function isAllowedCardDomain() {
+      let email = request.auth.token.email;
+      return email.matches('.*@unisabana\\.edu\\.co$');
+    }
+    
+    // Function to validate card data security
+    function hasSecureCardData() {
+      let data = request.resource.data;
+      // Verify card number is never stored in plain text
+      return !data.keys().hasAny(['number', 'cardNumber']) && 
+             data.keys().hasAll(['hashedNumber', 'last4']);
     }
     
     // Favorites collection rules
@@ -28,6 +42,31 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && isUserSpecificData();
       
       // Generally we add or remove favorites, not update them
+      allow update: if false;
+    }
+
+    // Tarjetas (Cards) collection rules
+    match /tarjetas/{cardId} {
+      // Allow read only if the document belongs to the user by email AND user has the correct domain
+      allow read: if isAuthenticated() && 
+                   isUserSpecificData() && 
+                   isAllowedCardDomain();
+      
+      // Allow create if:
+      // 1. The user email in the document matches the authenticated user
+      // 2. User has the correct domain (@unisabana.edu.co)
+      // 3. Card data is secure (no plain text card numbers)
+      allow create: if isAuthenticated() && 
+                      (request.resource.data.userEmail == request.auth.token.email) && 
+                      isAllowedCardDomain() && 
+                      hasSecureCardData();
+      
+      // Allow delete only if the document belongs to the user by email AND user has the correct domain
+      allow delete: if isAuthenticated() && 
+                     isUserSpecificData() && 
+                     isAllowedCardDomain();
+      
+      // Generally we don't update cards, we delete and create new ones
       allow update: if false;
     }
 
