@@ -9,6 +9,19 @@ import BottomNav from '../../../components/BottomNav';
 import UserDashboard from '../../../components/UserDashboard';
 import cartIcon from '../../../assets/carrito.png';
 import profileIcon from '../../../assets/usuario.png';
+import Escuela from '../../../assets/escuela.png';
+import Arcos from '../../../assets/arcos.png';
+import Embarca from '../../../assets/embarca.png';
+import Living from '../../../assets/living.png';
+import Kioskos from '../../../assets/kioskos.png';
+import Banderitas from '../../../assets/banderitas.png';
+import Wok from '../../../assets/wok.png';
+import PuntoVerde from '../../../assets/verde.png';
+import PuntoCafe from '../../../assets/verde.png';
+import Bolsa from '../../../assets/bolsa.png';
+import CafeEmbarca from '../../../assets/cafeembarca.png';
+import CafeEstudio from '../../../assets/estudio.png';
+import CafeLetras from '../../../assets/letras.png';
 
 export default function MapPage() {
   const [searchText, setSearchText] = useState('');
@@ -41,9 +54,20 @@ export default function MapPage() {
   };
 
   const allLocations = [
-    { id: '1', image: null, title: 'Mesón de La Sabana', type: 'Restaurantes' },
-    { id: '2', image: null, title: 'Escuela', type: 'Restaurantes' },
-    { id: '3', image: null, title: 'Arcos', type: 'Cafés' }
+    { id: '1', image: PuntoCafe, title: 'Mesón de La Sabana', type: 'Restaurantes' },
+    { id: '2', image: Escuela, title: 'Escuela', type: 'Restaurantes' },
+    { id: '3', image: Arcos, title: 'Arcos', type: 'Restaurantes' },
+    { id: '4', image: Embarca, title: 'Embarcadero', type: 'Restaurantes' },
+    { id: '5', image: Living, title: 'TerrazaLiving', type: 'Restaurantes' },
+    { id: '6', image: Kioskos, title: 'Kioskos', type: 'Restaurantes' },
+    { id: '7', image: Banderitas, title: 'Banderitas', type: 'Restaurantes' },
+    { id: '9', image: Wok, title: 'PuntoWok', type: 'Restaurantes' },
+    { id: '9', image: PuntoVerde, title: 'Punto-Verde', type: 'Restaurantes' },
+    { id: '10', image: Bolsa, title: 'Café-Bolsa', type: 'Cafés' },
+    { id: '11', image: CafeEmbarca, title: 'Embarcadero', type: 'Cafés' },
+    { id: '12', image: CafeEstudio, title: 'Estudio', type: 'Cafés' },
+    { id: '13', image: CafeLetras, title: 'Letras', type: 'Cafés' },
+    { id: '14', image: PuntoCafe, title: 'Punto', type: 'Cafés' },
   ];
 
   const visible = allLocations
@@ -91,21 +115,34 @@ export default function MapPage() {
   return (
     <main className="relative w-full h-screen bg-[#FBFBFA] flex flex-col">
       {/* Sidebar with UserDashboard */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <section
-        className={`fixed top-0 left-0 h-full w-64 shadow-lg transform ${
+        className={`fixed top-0 left-0 h-full w-64 bg-[#3F2EDA] shadow-lg transform ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } transition-transform duration-300 z-20`}
+        } transition-transform duration-300 z-50`}
+        aria-hidden={!isSidebarOpen}
+        aria-label="User dashboard"
       >
         <UserDashboard onClose={() => setIsSidebarOpen(false)} />
       </section>
 
       {/* Contenedor principal con espaciado vertical */}
       <div className="flex flex-col space-y-4 overflow-y-auto pb-24 px-4 pt-4">
-        {/* Barra superior con iconos */}        <section className="bg-[#1D1981] shadow-md flex justify-between items-center px-2 py-3 rounded-md">
+        {/* Barra superior con iconos */}
+        <section className="bg-[#3822B4] shadow-md flex justify-between items-center px-2 py-3 rounded-md">
           <button onClick={() => setIsSidebarOpen(true)} aria-label="Perfil">
             <img src={profileIcon} alt="Perfil" className="w-10 h-10" />
           </button>
-          <button onClick={() => navigate('/cart')} aria-label="Carrito">
+          <button 
+            onClick={() => navigate('/cart')}
+            aria-label="Carrito"
+          >
             <img src={cartIcon} alt="Carrito" className="w-10 h-10" />
           </button>
         </section>
@@ -131,8 +168,7 @@ export default function MapPage() {
         {/* Mapa con altura dinámica */}
         <section className="flex justify-center">
           <div 
-            className="w-[350px] rounded-lg overflow-hidden"
-            style={{ height: `calc(100vh - ${containerHeight}px - 200px)` }}
+            className="w-[1500px] rounded-lg overflow-hidden"
           >
             <MapView />
           </div>

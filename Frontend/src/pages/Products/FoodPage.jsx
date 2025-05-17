@@ -9,8 +9,10 @@ import RatingModal from './components/RatingModal';
 import TopBar from './components/TopBar';
 import BottomNavWithMap from './components/BottomNavWithMap';
 import UserDashboard from '../../components/UserDashboard';
+import ProductRatingsModal from './components/ProductRatingsModal';
 
-export default function FoodPage() {  const { locationId, productId } = useParams();
+export default function FoodPage() {
+  const { locationId, productId } = useParams();
   const navigate = useNavigate();
   const { addToCart, cartItemsCount } = useCartContext();
   const { isFavorite, toggleFavorite, isFavoritingAllowed } = useFavorites();
@@ -24,8 +26,11 @@ export default function FoodPage() {  const { locationId, productId } = useParam
   const [isPOSUser, setIsPOSUser] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [locationTitle, setLocationTitle] = useState('');
-  const [showAddedToCart, setShowAddedToCart] = useState(false);  const [canUseFavorites, setCanUseFavorites] = useState(true);
-  
+  const [showAddedToCart, setShowAddedToCart] = useState(false);
+  const [canUseFavorites, setCanUseFavorites] = useState(true);
+  const [isRatingsModalOpen, setIsRatingsModalOpen] = useState(false);
+  const [ratingsList, setRatingsList] = useState([]);
+
   // Effect to check if user is POS user and get location title
   useEffect(() => {
     const userEmail = localStorage.getItem('userEmail');
@@ -217,7 +222,27 @@ export default function FoodPage() {  const { locationId, productId } = useParam
       console.error('Error submitting rating:', err);
     }
   };
-    if (loading) return (
+
+  // Cargar todas las calificaciones del producto
+  const fetchRatings = async () => {
+    const ratingsQuery = query(
+      collection(db, 'ratings'),
+      where('productId', '==', productId),
+      where('locationId', '==', locationId)
+    );
+    const ratingsSnapshot = await getDocs(ratingsQuery);
+    const ratingsArr = [];
+    ratingsSnapshot.forEach(doc => ratingsArr.push(doc.data()));
+    setRatingsList(ratingsArr);
+  };
+
+  // Al abrir el modal de calificaciones, carga las calificaciones
+  const handleOpenRatingsModal = async () => {
+    await fetchRatings();
+    setIsRatingsModalOpen(true);
+  };
+
+  if (loading) return (
     <div className="flex items-center justify-center h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1D1981]"></div>
     </div>
@@ -362,16 +387,27 @@ export default function FoodPage() {  const { locationId, productId } = useParam
             </header>
             
             {/* Ratings */}
-            <div className="flex flex-wrap items-center mt-3">
-              <StarRating value={averageRating} readOnly />
-              <span className="ml-2 text-sm text-gray-600">({ratingCount} calificaciones)</span>
-              <button 
-                onClick={handleRateProduct}
-                className="ml-auto sm:ml-4 text-sm text-[#5947FF] hover:underline"
-                aria-label="Calificar este producto"
-              >
-                Calificar producto
-              </button>
+            <div className="flex flex-wrap items-center mt-3 gap-2 justify-between">
+              <div className="flex flex-col items-start">
+                <StarRating value={averageRating} readOnly />
+                <span className="text-sm text-gray-600 mt-1">({ratingCount} calificaciones)</span>
+              </div>
+              <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                <button 
+                  onClick={handleRateProduct}
+                  className="py-3 px-6 bg-[#5947FF] text-white rounded-xl font-medium hover:bg-[#4937e0] transition-colors"
+                  aria-label="Calificar este producto"
+                >
+                  Calificar producto
+                </button>
+                <button
+                  onClick={handleOpenRatingsModal}
+                  className="py-3 px-6 bg-[#5947FF] text-white rounded-xl font-medium hover:bg-[#4937e0] transition-colors"
+                  aria-label="Ver calificaciones"
+                >
+                  Ver calificaciones
+                </button>
+              </div>
             </div>
             
             {/* Description */}
@@ -431,6 +467,13 @@ export default function FoodPage() {  const { locationId, productId } = useParam
         onClose={() => setIsRatingModalOpen(false)}
         onSubmit={handleRatingSubmit}
         productName={product.nombre || product.name}
+      />
+
+      {/* Califications modal */}
+      <ProductRatingsModal
+        isOpen={isRatingsModalOpen}
+        onClose={() => setIsRatingsModalOpen(false)}
+        ratings={ratingsList}
       />
 
       {/* Mensaje de producto agregado al carrito */}

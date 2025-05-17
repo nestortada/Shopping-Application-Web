@@ -22,10 +22,7 @@ export default function StarRating({ value, max = 5, onChange, readOnly = false 
         {isFilled ? (
           <span className="text-yellow-400">★</span>
         ) : isHalfFilled ? (
-          <span className="text-yellow-400 relative">
-            <span className="absolute">★</span>
-            <span className="text-gray-300 mix-blend-lighten absolute">☆</span>
-          </span>
+          <span className="text-yellow-400">★</span>
         ) : (
           <span className="text-gray-300">☆</span>
         )}
