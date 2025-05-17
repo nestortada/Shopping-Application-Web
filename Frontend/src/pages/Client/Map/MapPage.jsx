@@ -131,7 +131,7 @@ export default function MapPage() {
       {/* Contenedor principal con espaciado vertical */}
       <div className="flex flex-col space-y-4 overflow-y-auto pb-24 px-4 pt-4">
         {/* Barra superior con iconos */}
-        <section className="bg-[#1D1981] shadow-md flex justify-between items-center px-2 py-3 rounded-md">
+        <section className="bg-[#3822B4] shadow-md flex justify-between items-center px-2 py-3 rounded-md">
           <button onClick={() => setIsSidebarOpen(true)} aria-label="Perfil">
             <img src={profileIcon} alt="Perfil" className="w-10 h-10" />
           </button>
