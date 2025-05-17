@@ -134,24 +134,39 @@ export default function UserDashboard({ onClose }) {
       minimumFractionDigits: 0
     }).format(balance || 0);
   };
-
-  // Add "Pendientes" menu item for Unisabana users
+  // Add special items for different user types
   const isUnisabanaUser = user?.email?.endsWith('@unisabana.edu.co');
-
-  const menuItems = user?.role === 'Perfil POS' 
-    ? [
-        { id: 'password', label: 'Cambiar contraseña', route: '/forgot' },
-        { id: 'inventory', label: 'Inventario', route: '/inventory' },
-        { id: 'ratings', label: 'Mis calificaciones', route: '/ratings' },
-        { id: 'orders', label: 'Estados de pedido', route: '/orders' }
-      ]
-    : [
-        { id: 'password', label: 'Cambiar contraseña', route: '/forgot' },
-        { id: 'cards', label: 'Mis tarjetas', route: '/cards' },
-        { id: 'balance', label: 'Recargar saldo', route: '/balance' },
-        { id: 'favorites', label: 'Mis favoritos', route: '/favorites' },
-        { id: 'ratings', label: 'Mis calificaciones', route: '/ratings' }
-      ];
+  const isSabanaposUser = user?.email?.endsWith('@sabanapos.edu.co');
+  
+  // Menu items based on user type
+  let menuItems = [];
+  
+  if (isSabanaposUser) {
+    // Menu for POS users
+    menuItems = [
+      { id: 'password', label: 'Cambiar contraseña', route: '/forgot' },
+      { id: 'inventory', label: 'Inventario', route: '/inventory' },
+      { id: 'ratings', label: 'Mis calificaciones', route: '/ratings' },
+      { id: 'order-status', label: 'Estado de Pedidos', route: '/pos/orders' }
+    ];
+  } else if (user?.role === 'Perfil POS') {
+    // Legacy menu for POS role users
+    menuItems = [
+      { id: 'password', label: 'Cambiar contraseña', route: '/forgot' },
+      { id: 'inventory', label: 'Inventario', route: '/inventory' },
+      { id: 'ratings', label: 'Mis calificaciones', route: '/ratings' },
+      { id: 'orders', label: 'Estados de pedido', route: '/orders' }
+    ];
+  } else {
+    // Regular user menu
+    menuItems = [
+      { id: 'password', label: 'Cambiar contraseña', route: '/forgot' },
+      { id: 'cards', label: 'Mis tarjetas', route: '/cards' },
+      { id: 'balance', label: 'Recargar saldo', route: '/balance' },
+      { id: 'favorites', label: 'Mis favoritos', route: '/favorites' },
+      { id: 'ratings', label: 'Mis calificaciones', route: '/ratings' }
+    ];
+  }
 
   if (error) {
     return (

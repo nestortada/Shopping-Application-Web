@@ -171,6 +171,55 @@ export const OrderProvider = ({ children }) => {
     }
   }, [getUserOrders]);
 
+  // Get orders by location ID - using useCallback
+  const getOrdersByLocation = useCallback(async (locationId, statusFilter = []) => {
+    if (!locationId) return [];
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log("Getting orders for location:", locationId);
+      console.log("Status filter:", statusFilter);
+      
+      let ordersQuery;
+      
+      if (statusFilter && statusFilter.length > 0) {
+        // Filter by both locationID and orderStatus
+        ordersQuery = query(
+          collection(db, 'orders'),
+          where('locationID', '==', locationId),
+          where('orderStatus', 'in', statusFilter),
+          orderBy('orderTimestamp', 'desc')
+        );
+      } else {
+        // Filter by locationID only
+        ordersQuery = query(
+          collection(db, 'orders'),
+          where('locationID', '==', locationId),
+          orderBy('orderTimestamp', 'desc')
+        );
+      }
+      
+      const querySnapshot = await getDocs(ordersQuery);
+      
+      const locationOrders = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        orderTimestamp: doc.data().orderTimestamp?.toDate() || new Date(),
+      }));
+      
+      console.log("Retrieved location orders:", locationOrders.length);
+      return locationOrders;
+    } catch (err) {
+      console.error('Error fetching location orders:', err);
+      setError('Failed to fetch orders for this location. Please try again.');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Check for current order in localStorage when component mounts
   useEffect(() => {
     const currentOrderId = localStorage.getItem('currentOrderId');
@@ -178,7 +227,6 @@ export const OrderProvider = ({ children }) => {
       getOrderById(currentOrderId).catch(console.error);
     }
   }, [getOrderById]);
-
   return (
     <OrderContext.Provider
       value={{
@@ -191,6 +239,7 @@ export const OrderProvider = ({ children }) => {
         updateOrderStatus,
         getUserOrders,
         getPendingOrders,
+        getOrdersByLocation,
         setCurrentOrder,
       }}
     >

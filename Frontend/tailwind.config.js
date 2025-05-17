@@ -28,11 +28,22 @@ export default {
           '100%': {
             transform: 'scale(1)'
           }
+        },
+        'fadeIn': {
+          '0%': {
+            opacity: '0',
+            transform: 'scale(0.9)'
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'scale(1)'
+          }
         }
       },
       animation: {
         'fade-in-up': 'fade-in-up 0.3s ease-out',
-        'heart-beat': 'heart-beat 0.5s ease-in-out'
+        'heart-beat': 'heart-beat 0.5s ease-in-out',
+        'fadeIn': 'fadeIn 0.3s ease-out'
       }
     },
   },

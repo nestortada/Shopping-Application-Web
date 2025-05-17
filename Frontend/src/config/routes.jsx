@@ -13,6 +13,7 @@ import CartPage from '../pages/Cart/CartPage';
 import FavoritesPage from '../pages/Products/FavoritesPage';
 import StatusOrderPage from '../pages/Client/Order/StatusOrderPage';
 import MyOrdersPage from '../pages/Client/Order/MyOrdersPage';
+import PosOrdersPage from '../pages/POS/Orders/PosOrdersPage';
 
 export const routes = [
   { id: 'login', path: '/', component: LoginPage },
@@ -31,5 +32,6 @@ export const routes = [
   { id: 'favorites', path: '/favorites', component: FavoritesPage },
   { id: 'status-order', path: '/client/order/status', component: StatusOrderPage },
   { id: 'my-orders', path: '/client/orders', component: MyOrdersPage },
+  { id: 'pos-orders', path: '/pos/orders', component: PosOrdersPage },
 ]
 
