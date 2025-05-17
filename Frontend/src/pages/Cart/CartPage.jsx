@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCartContext } from '../../context/CartContext';
 import { useCardContext } from '../../context/CardContext';
+import { useOrderContext } from '../../context/OrderContext';
 import { collection, getDocs, doc, updateDoc, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import { validateOrderAvailability } from '../../services/orderService';
@@ -37,10 +38,32 @@ export default function CartPage() {
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [installments, setInstallments] = useState(1);
-  const [userBalance, setUserBalance] = useState(50000); // Saldo simulado del usuario
-  // Detectar el rol del usuario basado en el dominio de email
+  const [userBalance, setUserBalance] = useState(50000); // Saldo simulado del usuario  // Detectar el rol del usuario basado en el dominio de email
   useEffect(() => {
     const userEmail = localStorage.getItem('userEmail');
+    let locationId = localStorage.getItem('selectedLocationId');
+    
+    // Si no se encuentra, intentar con la clave 'meson' para Mesón de la Sabana
+    if (!locationId) {
+      locationId = localStorage.getItem('meson');
+      // Si se encuentra 'meson', guardar en 'selectedLocationId' para uso futuro
+      if (locationId) {
+        localStorage.setItem('selectedLocationId', locationId);
+        console.log('useEffect - Encontrado meson, guardado como selectedLocationId:', locationId);
+      }
+    }
+    
+    console.log('useEffect - localStorage contents:', { 
+      userEmail, 
+      selectedLocationId: locationId,
+      allKeys: Object.keys(localStorage)
+    });
+    
+    // Si somos un CLIENT y tenemos una ubicación, mostrar en consola
+    if (userEmail && userEmail.endsWith('@unisabana.edu.co') && locationId) {
+      console.log('Cliente con ubicación seleccionada:', locationId);
+    }
+    
     if (userEmail) {
       if (userEmail.endsWith('@sabanapos.edu.co')) {
         setUserRole('POS');
@@ -157,13 +180,122 @@ export default function CartPage() {
       setModalMessage('Error al procesar el pedido. Inténtalo de nuevo.');
       setIsModalOpen(true);
     }
-  };
-  // Manejar el click en "Realizar pedido"
+  };  // Manejar el click en "Realizar pedido"
   const handleCheckout = () => {
     if (userRole === 'POS') {
       validateProductAvailability();
     } else {
+      // Verificar si el ID de ubicación está disponible para usuarios CLIENT
+      let locationId = localStorage.getItem('selectedLocationId');
+      
+      // Si no se encuentra, intentar con la clave 'meson' para Mesón de la Sabana
+      if (!locationId) {
+        locationId = localStorage.getItem('meson');
+        // Si se encuentra 'meson', guardar en 'selectedLocationId' para uso futuro
+        if (locationId) {
+          localStorage.setItem('selectedLocationId', locationId);
+          console.log('handleCheckout - Encontrado meson, guardado como selectedLocationId:', locationId);
+        }
+      }
+      
+      console.log('handleCheckout - locationId:', locationId);
+      console.log('All localStorage keys:', Object.keys(localStorage));
+      
+      if (!locationId && userRole === 'CLIENT') {
+        setModalTitle('Selección de Local Requerida');
+        setModalMessage('Para continuar con la compra, primero debes seleccionar un local. Por favor, ve a la página de ubicaciones usando el ícono del mapa en la barra inferior y selecciona un local. Una vez seleccionado, regresa al carrito para completar tu compra.');
+        setIsModalOpen(true);
+        return;
+      }
       setIsDrawerOpen(true);
+    }
+  };
+  // Verificar disponibilidad de productos para clientes
+  const validateClientProductAvailability = async (locationId) => {
+    try {
+      console.log('validateClientProductAvailability - locationId:', locationId);
+      
+      let allAvailable = true;
+      const outOfStockItems = [];
+      
+      // Verificar disponibilidad en Firebase
+      for (const item of cartItems) {
+        try {
+          const productQuery = query(
+            collection(db, locationId),
+            where('id', '==', item.id)
+          );
+          
+          const querySnapshot = await getDocs(productQuery);
+          
+          if (querySnapshot.empty) {
+            console.error(`Producto no encontrado: ${item.name}`);
+            outOfStockItems.push(item.name);
+            allAvailable = false;
+            continue;
+          }
+          
+          const productDoc = querySnapshot.docs[0];
+          const productData = productDoc.data();
+          
+          console.log(`Verificando stock para ${item.name}:`, {
+            disponible: productData.stock || 0,
+            solicitado: item.quantity
+          });
+          
+          if (!productData.stock || productData.stock < item.quantity) {
+            outOfStockItems.push(item.name);
+            allAvailable = false;
+          }
+        } catch (error) {
+          console.error(`Error al verificar producto ${item.name}:`, error);
+          outOfStockItems.push(item.name);
+          allAvailable = false;
+        }
+      }
+      
+      if (!allAvailable) {
+        setModalTitle('Error');
+        setModalMessage(`Ya no hay más disponibles de uno o más productos: ${outOfStockItems.join(', ')}`);
+        setIsModalOpen(true);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error al validar disponibilidad:', error);
+      setModalTitle('Error');
+      setModalMessage('Error al procesar el pedido. Inténtalo de nuevo.');
+      setIsModalOpen(true);
+      return false;
+    }
+  };
+  // Actualizar stock después de confirmación de pago para clientes
+  const updateProductStock = async (locationId) => {
+    try {
+      console.log('updateProductStock - locationId:', locationId);
+      
+      // Si todos los productos están disponibles, actualizar el stock
+      for (const item of cartItems) {
+        const productQuery = query(
+          collection(db, locationId),
+          where('id', '==', item.id)
+        );
+        
+        const querySnapshot = await getDocs(productQuery);
+        if (!querySnapshot.empty) {
+          const productDoc = querySnapshot.docs[0];
+          const productRef = doc(db, locationId, productDoc.id);
+          const productData = productDoc.data();
+          await updateDoc(productRef, {
+            stock: (productData.stock || 0) - item.quantity
+          });
+        }
+      }
+      return true;
+    } catch (error) {
+      console.error('Error al actualizar stock:', error);
+      return false;
     }
   };
 
@@ -177,9 +309,8 @@ export default function CartPage() {
       setModalMessage('El formato del cupón es incorrecto o no existe.');
       setIsModalOpen(true);
     }
-  };
-  // Finalizar compra desde el drawer (para usuarios CLIENT)
-  const handlePayment = () => {
+  };  // Finalizar compra desde el drawer (para usuarios CLIENT)
+  const handlePayment = async () => {
     if (paymentMethod === 'tarjeta' && !selectedCard) {
       setShowCardModal(true);
       return;
@@ -190,31 +321,262 @@ export default function CartPage() {
       return;
     }
     
+    // Obtener el ID del local desde localStorage (el usuario debe haber seleccionado un local)
+    let locationId = localStorage.getItem('selectedLocationId');
+    
+    // Si no se encuentra, intentar con la clave 'meson' para Mesón de la Sabana
+    if (!locationId) {
+      locationId = localStorage.getItem('meson');
+      // Si se encuentra 'meson', guardar en 'selectedLocationId' para uso futuro
+      if (locationId) {
+        localStorage.setItem('selectedLocationId', locationId);
+        console.log('handlePayment - Encontrado meson, guardado como selectedLocationId:', locationId);
+      }
+    }
+    
+    console.log('handlePayment - locationId:', locationId);
+    
+    if (!locationId) {
+      setIsDrawerOpen(false);
+      setModalTitle('Selección de Local Requerida');
+      setModalMessage('Para continuar con la compra, primero debes seleccionar un local. Por favor, ve a la página de ubicaciones usando el ícono del mapa en la barra inferior y selecciona un local. Una vez seleccionado, regresa al carrito para completar tu compra.');
+      setIsModalOpen(true);
+      return;
+    }
+    
+    // Verificar disponibilidad de los productos para el cliente
+    const isAvailable = await validateClientProductAvailability(locationId);
+    
+    if (!isAvailable) {
+      return; // El mensaje de error ya se muestra en validateClientProductAvailability
+    }
+    
+    // Actualizar el stock después de confirmar la disponibilidad
+    const stockUpdated = await updateProductStock(locationId);
+    
+    if (!stockUpdated) {
+      setIsDrawerOpen(false);
+      setModalTitle('Error');
+      setModalMessage('Error al actualizar el inventario. Por favor, intenta nuevamente.');
+      setIsModalOpen(true);
+      return;
+    }
+    
     setIsDrawerOpen(false);
     setModalTitle('Éxito');
     setModalMessage('¡Pago realizado con éxito! Tu pedido está en camino.');
     setIsModalOpen(true);
     clearCart();
-  };
-  
-  // Manejar continuación desde modal de tarjeta
-  const handleCardContinue = () => {
+  };  // Manejar continuación desde modal de tarjeta
+  const handleCardContinue = async () => {
     setShowCardModal(false);
-    setIsDrawerOpen(false);
-    setModalTitle('Éxito');
-    setModalMessage('¡Pago realizado con éxito con tarjeta! Tu pedido está en camino.');
-    setIsModalOpen(true);
-    clearCart();
-  };
-  
-  // Manejar continuación desde modal de saldo
-  const handleBalanceContinue = () => {
+    
+    // Obtener el ID del local desde localStorage
+    let locationId = localStorage.getItem('selectedLocationId');
+    
+    // Si no se encuentra, intentar con la clave 'meson' para Mesón de la Sabana
+    if (!locationId) {
+      locationId = localStorage.getItem('meson');
+      // Si se encuentra 'meson', guardar en 'selectedLocationId' para uso futuro
+      if (locationId) {
+        localStorage.setItem('selectedLocationId', locationId);
+        console.log('handleCardContinue - Encontrado meson, guardado como selectedLocationId:', locationId);
+      }
+    }
+    
+    console.log('handleCardContinue - locationId:', locationId);
+    
+    if (!locationId) {
+      setIsDrawerOpen(false);
+      setModalTitle('Selección de Local Requerida');
+      setModalMessage('Para continuar con la compra, primero debes seleccionar un local. Por favor, ve a la página de ubicaciones usando el ícono del mapa en la barra inferior y selecciona un local. Una vez seleccionado, regresa al carrito para completar tu compra.');
+      setIsModalOpen(true);
+      return;
+    }
+    
+    // Verificar disponibilidad de los productos para el cliente
+    const isAvailable = await validateClientProductAvailability(locationId);
+    
+    if (!isAvailable) {
+      setIsDrawerOpen(false);
+      return; // El mensaje de error ya se muestra en validateClientProductAvailability
+    }
+    
+    // Actualizar el stock después de confirmar la disponibilidad
+    const stockUpdated = await updateProductStock(locationId);
+    
+    if (!stockUpdated) {
+      setIsDrawerOpen(false);
+      setModalTitle('Error');
+      setModalMessage('Error al actualizar el inventario. Por favor, intenta nuevamente.');
+      setIsModalOpen(true);
+      return;
+    }
+    
+    try {
+      const userEmail = localStorage.getItem('userEmail');
+      
+      // Check if the user's email is from @unisabana.edu.co
+      if (userEmail && userEmail.endsWith('@unisabana.edu.co')) {
+        // Get restaurant name for the order
+        let restaurantName = localStorage.getItem('restaurantName') || 'Restaurante';
+        
+        // Create an order object
+        const orderProducts = cartItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.price || 0
+        }));
+        
+        // Calculate pickup time (5-15 minutes from now)
+        const now = new Date();
+        const minutesToAdd = Math.floor(Math.random() * 11) + 5; // 5 to 15 minutes
+        const estimatedPickupTime = new Date(now.getTime() + minutesToAdd * 60000);
+        
+        // Format time for display
+        const formattedTime = estimatedPickupTime.toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        
+        // Generate a unique order number
+        const orderNumber = Math.floor(10000 + Math.random() * 90000); // 5-digit number
+        
+        // Save order data to localStorage for non-context usage
+        localStorage.setItem('orderNumber', orderNumber.toString());
+        localStorage.setItem('orderStatus', 'Confirmed');
+        localStorage.setItem('orderTimestamp', now.toISOString());
+        localStorage.setItem('estimatedPickupTime', formattedTime);
+        localStorage.setItem('restaurantName', restaurantName);
+        localStorage.setItem('totalAmount', getTotalPrice().toString());
+        localStorage.setItem('paymentMethod', 'tarjeta');
+        
+        // Clear the cart
+        clearCart();
+        
+        // Redirect to the order status page
+        navigate('/client/order/status');
+        return;
+      } else {
+        // For non-unisabana users, show success modal
+        setIsDrawerOpen(false);
+        setModalTitle('Éxito');
+        setModalMessage('¡Pago realizado con éxito con tarjeta! Tu pedido está en camino.');
+        setIsModalOpen(true);
+        clearCart();
+      }
+    } catch (error) {
+      console.error('Error processing order:', error);
+      setIsDrawerOpen(false);
+      setModalTitle('Error');
+      setModalMessage('Error al procesar el pedido. Por favor, intenta nuevamente.');
+      setIsModalOpen(true);
+    }
+  };  // Manejar continuación desde modal de saldo
+  const handleBalanceContinue = async () => {
     setShowBalanceModal(false);
-    setIsDrawerOpen(false);
-    setModalTitle('Éxito');
-    setModalMessage('¡Pago realizado con éxito con saldo! Tu pedido está en camino.');
-    setIsModalOpen(true);
-    clearCart();
+    
+    // Obtener el ID del local desde localStorage
+    let locationId = localStorage.getItem('selectedLocationId');
+    
+    // Si no se encuentra, intentar con la clave 'meson' para Mesón de la Sabana
+    if (!locationId) {
+      locationId = localStorage.getItem('meson');
+      // Si se encuentra 'meson', guardar en 'selectedLocationId' para uso futuro
+      if (locationId) {
+        localStorage.setItem('selectedLocationId', locationId);
+        console.log('handleBalanceContinue - Encontrado meson, guardado como selectedLocationId:', locationId);
+      }
+    }
+    
+    console.log('handleBalanceContinue - locationId:', locationId);
+    
+    if (!locationId) {
+      setIsDrawerOpen(false);
+      setModalTitle('Selección de Local Requerida');
+      setModalMessage('Para continuar con la compra, primero debes seleccionar un local. Por favor, ve a la página de ubicaciones usando el ícono del mapa en la barra inferior y selecciona un local. Una vez seleccionado, regresa al carrito para completar tu compra.');
+      setIsModalOpen(true);
+      return;
+    }
+    
+    // Verificar disponibilidad de los productos para el cliente
+    const isAvailable = await validateClientProductAvailability(locationId);
+    
+    if (!isAvailable) {
+      setIsDrawerOpen(false);
+      return; // El mensaje de error ya se muestra en validateClientProductAvailability
+    }
+    
+    // Actualizar el stock después de confirmar la disponibilidad
+    const stockUpdated = await updateProductStock(locationId);
+    
+    if (!stockUpdated) {
+      setIsDrawerOpen(false);
+      setModalTitle('Error');
+      setModalMessage('Error al actualizar el inventario. Por favor, intenta nuevamente.');
+      setIsModalOpen(true);
+      return;
+    }
+    
+    try {
+      const userEmail = localStorage.getItem('userEmail');
+      
+      // Check if the user's email is from @unisabana.edu.co
+      if (userEmail && userEmail.endsWith('@unisabana.edu.co')) {
+        // Get restaurant name for the order
+        let restaurantName = localStorage.getItem('restaurantName') || 'Restaurante';
+        
+        // Create an order object
+        const orderProducts = cartItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.price || 0
+        }));
+        
+        // Calculate pickup time (5-15 minutes from now)
+        const now = new Date();
+        const minutesToAdd = Math.floor(Math.random() * 11) + 5; // 5 to 15 minutes
+        const estimatedPickupTime = new Date(now.getTime() + minutesToAdd * 60000);
+        
+        // Format time for display
+        const formattedTime = estimatedPickupTime.toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        
+        // Generate a unique order number
+        const orderNumber = Math.floor(10000 + Math.random() * 90000); // 5-digit number
+        
+        // Save order data to localStorage for non-context usage
+        localStorage.setItem('orderNumber', orderNumber.toString());
+        localStorage.setItem('orderStatus', 'Confirmed');
+        localStorage.setItem('orderTimestamp', now.toISOString());
+        localStorage.setItem('estimatedPickupTime', formattedTime);
+        localStorage.setItem('restaurantName', restaurantName);
+        localStorage.setItem('totalAmount', getTotalPrice().toString());
+        localStorage.setItem('paymentMethod', 'saldo');
+        
+        // Clear the cart
+        clearCart();
+        
+        // Redirect to the order status page
+        navigate('/client/order/status');
+        return;
+      } else {
+        // For non-unisabana users, show success modal
+        setIsDrawerOpen(false);
+        setModalTitle('Éxito');
+        setModalMessage('¡Pago realizado con éxito con saldo! Tu pedido está en camino.');
+        setIsModalOpen(true);
+        clearCart();
+      }
+    } catch (error) {
+      console.error('Error processing order:', error);
+      setIsDrawerOpen(false);
+      setModalTitle('Error');
+      setModalMessage('Error al procesar el pedido. Por favor, intenta nuevamente.');
+      setIsModalOpen(true);
+    }
   };
   
   // Manejar cambio de método de pago
@@ -247,10 +609,30 @@ export default function CartPage() {
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-          </div>
-          <p className="text-gray-600 text-xl font-paprika mb-4">Tu carrito está vacío</p>
+          </div>          <p className="text-gray-600 text-xl font-paprika mb-4">Tu carrito está vacío</p>
           <button
-            onClick={() => navigate('/productos')}
+            onClick={() => {
+              // Obtener locationId de localStorage
+              let locationId = localStorage.getItem('selectedLocationId');
+              
+              // Si no se encuentra, intentar con la clave 'meson' para Mesón de la Sabana
+              if (!locationId) {
+                locationId = localStorage.getItem('meson');
+                if (locationId) {
+                  localStorage.setItem('selectedLocationId', locationId);
+                  console.log('CartPage - Botón Continuar Comprando: Encontrado meson, guardado como selectedLocationId:', locationId);
+                }
+              }
+              
+              // Navegar a la página de productos con el locationId si está disponible
+              if (locationId && locationId !== 'default') {
+                console.log('CartPage - Navegando a productos con locationId:', locationId);
+                navigate(`/products/${locationId}`);
+              } else {
+                // Si no hay locationId, ir a la página general de productos
+                navigate('/products');
+              }
+            }}
             className="bg-[#5947FF] text-white font-paprika px-6 py-3 rounded-xl hover:bg-[#4836e0] transition-colors"
           >
             Continuar Comprando

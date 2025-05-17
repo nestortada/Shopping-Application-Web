@@ -6,6 +6,24 @@ import BottomNavWithMap from './components/BottomNavWithMap';
 import UserDashboard from '../../components/UserDashboard';
 import ProductCard from './components/ProductCard';
 
+// Helper function to get user-friendly restaurant name in uppercase
+const getRestaurantDisplayName = (locationId) => {
+  if (!locationId) return 'RESTAURANTE';
+  
+  switch (locationId.toLowerCase()) {
+    case 'meson':
+      return 'MESÓN DE LA SABANA';
+    case 'escuela':
+      return 'ESCUELA';
+    case 'arcos':
+      return 'ARCOS';
+    default:
+      // If it's another location ID, convert it to a better-looking format
+      // Convert locationId like "mesondelasabana" to "MESON DE LA SABANA"
+      return locationId.toUpperCase().replace(/([a-z])([A-Z])/g, '$1 $2');
+  }
+};
+
 export default function FavoritesPage() {
   const { favorites, loading, error, fetchFavorites } = useFavorites();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -126,8 +144,7 @@ export default function FavoritesPage() {
             <div className="text-center py-8 bg-white rounded-3xl shadow-lg">
               <p className="text-gray-500 font-paprika mb-4">
                 No tienes productos favoritos todavía
-              </p>
-              <button 
+              </p>              <button 
                 onClick={() => {
                   // Check if user is authenticated - similar to Add to Cart in FoodPage
                   const token = localStorage.getItem('token');
@@ -140,12 +157,24 @@ export default function FavoritesPage() {
                     return;
                   }
                   
-                  // Try to extract a restaurant from recent favorites or default to main products page
-                  const recentFavorite = favorites[0]; // We shouldn't get here if there are favorites, but check anyway
+                  // Get locationId from localStorage if available
+                  let locationId = localStorage.getItem('selectedLocationId');
                   
-                  if (recentFavorite && recentFavorite.locationId && recentFavorite.locationId !== 'default') {
-                    navigate(`/products/${recentFavorite.locationId}`);
+                  // If not found, try with 'meson' key as fallback
+                  if (!locationId) {
+                    locationId = localStorage.getItem('meson');
+                    if (locationId) {
+                      localStorage.setItem('selectedLocationId', locationId);
+                      console.log('Guardado meson como selectedLocationId:', locationId);
+                    }
+                  }
+                  
+                  if (locationId && locationId !== 'default') {
+                    // Navigate to the specific restaurant page
+                    console.log('Navegando a productos con locationId:', locationId);
+                    navigate(`/products/${locationId}`);
                   } else {
+                    // Fallback to general products page if no locationId available
                     navigate('/products');
                   }
                 }}
@@ -157,8 +186,7 @@ export default function FavoritesPage() {
             <ul className="list-none p-0 space-y-3 sm:space-y-4 w-full">
               {sortedFavorites
                 .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                .map(product => (
-                <li key={product.id || product.productId} className="w-full flex justify-center">
+                .map(product => (                <li key={product.id || product.productId} className="w-full flex justify-center">
                   <ProductCard 
                     product={{
                       id: product.id || product.productId,
@@ -167,9 +195,16 @@ export default function FavoritesPage() {
                       price: product.price || product.productPrice || product.precio || 0,
                       imageUrl: product.imageUrl || product.productImage || product.imagenURL || null,
                       locationId: product.locationId || 'default',
-                      locationName: product.locationName || 'Unknown Restaurant'
+                      locationName: getRestaurantDisplayName(product.locationId)
                     }} 
-                    locationId={product.locationId || 'default'} 
+                    locationId={product.locationId || 'default'}
+                    onClick={() => {
+                      // Guardar el locationId en localStorage para su uso en CartPage
+                      if (product.locationId && product.locationId !== 'default') {
+                        localStorage.setItem('selectedLocationId', product.locationId);
+                        console.log('Guardado desde FavoritesPage onClick en localStorage - selectedLocationId:', product.locationId);
+                      }
+                    }}
                   />
                 </li>
               ))}

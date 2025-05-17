@@ -17,8 +17,7 @@ export default function MapPage() {
   const [containerHeight, setContainerHeight] = useState(300);
   const dragRef = useRef(null);
   const navigate = useNavigate();
-  
-  // Function to handle location card clicks
+    // Function to handle location card clicks
   const handleLocationClick = (id, title) => {
     // Convert location title to a collection name (lowercase, no spaces)
     let collectionId = title.toLowerCase().replace(/\s+/g, '');
@@ -27,6 +26,10 @@ export default function MapPage() {
     if (title === 'Mesón de La Sabana') {
       collectionId = 'meson';
     }
+    
+    // Guardar el ID de la ubicación en localStorage para su uso en CartPage
+    localStorage.setItem('selectedLocationId', collectionId);
+    console.log('Guardado en localStorage - selectedLocationId:', collectionId);
     
     // Navigate to products page with location info
     navigate('/products', { 
@@ -39,15 +42,8 @@ export default function MapPage() {
 
   const allLocations = [
     { id: '1', image: null, title: 'Mesón de La Sabana', type: 'Restaurantes' },
-    { id: '2', image: null, title: 'Restaurante Escuela', type: 'Restaurantes' },
-    { id: '3', image: null, title: 'Arcos de La Sabana', type: 'Cafés' },
-    { id: '4', image: null, title: 'Café Juan Valdez', type: 'Cafés' },
-    { id: '5', image: null, title: 'La Hamburguesería', type: 'Restaurantes' },
-    { id: '6', image: null, title: 'Subway', type: 'Restaurantes' },
-    { id: '7', image: null, title: 'Café OMA', type: 'Cafés' },
-    { id: '8', image: null, title: 'Tostao', type: 'Cafés' },
-    { id: '9', image: null, title: 'Crepes & Waffles', type: 'Restaurantes' },
-    { id: '10', image: null, title: 'Starbucks', type: 'Cafés' }
+    { id: '2', image: null, title: 'Escuela', type: 'Restaurantes' },
+    { id: '3', image: null, title: 'Arcos', type: 'Cafés' }
   ];
 
   const visible = allLocations
@@ -105,12 +101,11 @@ export default function MapPage() {
 
       {/* Contenedor principal con espaciado vertical */}
       <div className="flex flex-col space-y-4 overflow-y-auto pb-24 px-4 pt-4">
-        {/* Barra superior con iconos */}
-        <section className="bg-[#1D1981] shadow-md flex justify-between items-center px-2 py-3 rounded-md">
+        {/* Barra superior con iconos */}        <section className="bg-[#1D1981] shadow-md flex justify-between items-center px-2 py-3 rounded-md">
           <button onClick={() => setIsSidebarOpen(true)} aria-label="Perfil">
             <img src={profileIcon} alt="Perfil" className="w-10 h-10" />
           </button>
-          <button onClick={() => console.log('Carrito')} aria-label="Carrito">
+          <button onClick={() => navigate('/cart')} aria-label="Carrito">
             <img src={cartIcon} alt="Carrito" className="w-10 h-10" />
           </button>
         </section>

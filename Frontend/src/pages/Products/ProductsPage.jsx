@@ -45,14 +45,17 @@ export default function ProductsPage() {
           console.error('Error parsing locations from localStorage:', e);
         }
       }
-    } 
-    // Otherwise check if we have location info in the route state (from MapPage)
+    }    // Otherwise check if we have location info in the route state (from MapPage)
     else if (location.state?.locationId) {
       setLocationId(location.state.locationId);
       // Set the location title if available
       if (location.state?.locationTitle) {
         setLocationTitle(location.state.locationTitle);
       }
+      
+      // Guardar el ID de la ubicación en localStorage para uso en el carrito
+      localStorage.setItem('selectedLocationId', location.state.locationId);
+      console.log('ProductsPage guardó en localStorage - selectedLocationId:', location.state.locationId);
     } else {
       // Try to determine if POS user
       const userEmail = localStorage.getItem('userEmail');

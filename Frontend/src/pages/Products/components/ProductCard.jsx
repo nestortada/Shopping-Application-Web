@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useFavorites } from '../../../context/FavoritesContext';
 
-export default function ProductCard({ product, locationId }) {
+export default function ProductCard({ product, locationId, onClick }) {
   const { 
     name = "Product", 
     description = "", 
@@ -16,9 +16,19 @@ export default function ProductCard({ product, locationId }) {
   const { isFavorite, toggleFavorite, isFavoritingAllowed } = useFavorites();
   const userEmail = localStorage.getItem('userEmail');
   const canUseFavorites = isFavoritingAllowed(userEmail);
-  
   const toggleDetails = () => {
     setShowDetails(!showDetails);
+    
+    // Save locationId to localStorage
+    if (locationId && locationId !== 'default') {
+      localStorage.setItem('selectedLocationId', locationId);
+      console.log('ProductCard toggleDetails: Saved locationId to localStorage:', locationId);
+    }
+    
+    // Call the onClick handler if provided
+    if (onClick && typeof onClick === 'function') {
+      onClick();
+    }
   };const handleFavoriteClick = (e) => {
     e.stopPropagation(); // Prevent triggering the card click
     
@@ -64,10 +74,16 @@ export default function ProductCard({ product, locationId }) {
     console.log("ProductCard: Toggling favorite for product", productToFavorite);
     toggleFavorite(productToFavorite);
   };
-
   const navigateToProductDetail = (e) => {
     e.stopPropagation();
     console.log('Navegando a producto:', product);
+    
+    // Save locationId to localStorage
+    if (locationId && locationId !== 'default') {
+      localStorage.setItem('selectedLocationId', locationId);
+      console.log('ProductCard: Saved locationId to localStorage:', locationId);
+    }
+    
     // Intentar usar id o fallback a docId si existe
     const productId = product.id || '';
     navigate(`/food/${locationId}/${productId}`);
@@ -94,7 +110,7 @@ export default function ProductCard({ product, locationId }) {
           </h3>
           {locationName && locationName !== "default" && (
             <p className="font-paprika text-[10px] sm:text-[12px] text-[#3F2EDA] font-semibold line-clamp-1">
-              {locationName}
+              {typeof locationName === 'string' ? locationName.toUpperCase() : locationName}
             </p>
           )}
           <p className="font-paprika text-[12px] sm:text-[14px] text-[#475569] line-clamp-1">
@@ -146,7 +162,7 @@ export default function ProductCard({ product, locationId }) {
             </h3>
             {locationName && locationName !== "default" && (
               <p className="font-paprika text-[10px] sm:text-[12px] text-[#3F2EDA] font-semibold">
-                {locationName}
+                {typeof locationName === 'string' ? locationName.toUpperCase() : locationName}
               </p>
             )}
             <div className="font-paprika text-[14px] sm:text-[16px] text-[#0F172A]">
@@ -234,5 +250,6 @@ ProductCard.propTypes = {
     productPrice: PropTypes.number,
     productImage: PropTypes.string
   }).isRequired,
-  locationId: PropTypes.string.isRequired
+  locationId: PropTypes.string.isRequired,
+  onClick: PropTypes.func
 };
