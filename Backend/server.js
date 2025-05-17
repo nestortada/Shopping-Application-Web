@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import authRoutes from './api/routes/auth.js';
+import customerRoutes from './api/routes/customer.js';
 
 dotenv.config();
 const app = express();
@@ -81,6 +82,7 @@ app.use(async (req, res, next) => {
 });
 
 app.use('/api/v1/auth', authRoutes());
+app.use('/api/v1/customers', customerRoutes());
 
 // Ruta de healthcheck
 app.get('/api/health', (req, res) => {

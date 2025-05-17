@@ -7,8 +7,7 @@ export default {
     extend: {
       fontFamily: {
         'paprika': ['Paprika', 'sans-serif'],
-      },
-      keyframes: {
+      },      keyframes: {
         'fade-in-up': {
           '0%': {
             opacity: '0',
@@ -18,10 +17,22 @@ export default {
             opacity: '1',
             transform: 'translateY(0)'
           },
+        },
+        'heart-beat': {
+          '0%': {
+            transform: 'scale(1)'
+          },
+          '50%': {
+            transform: 'scale(1.2)'
+          },
+          '100%': {
+            transform: 'scale(1)'
+          }
         }
       },
       animation: {
-        'fade-in-up': 'fade-in-up 0.3s ease-out'
+        'fade-in-up': 'fade-in-up 0.3s ease-out',
+        'heart-beat': 'heart-beat 0.5s ease-in-out'
       }
     },
   },

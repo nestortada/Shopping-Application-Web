@@ -1,27 +1,41 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { useFavorites } from '../../../context/FavoritesContext';
 
 export default function ProductCard({ product, locationId }) {
-  const { name, description, price, imageUrl } = product;
-  const [showDetails, setShowDetails] = useState(false);  const navigate = useNavigate();
-
+  const { name = "Product", description = "", price = 0, imageUrl } = product;
+  const [showDetails, setShowDetails] = useState(false);  
+  const navigate = useNavigate();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const toggleDetails = () => {
     setShowDetails(!showDetails);
   };
-    const navigateToProductDetail = (e) => {
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation(); // Prevent triggering the card click
+    
+    // Ensure the product has an ID
+    const productToFavorite = {
+      ...product,
+      id: product.id || product._id || product.docId, // Use any valid ID field
+      locationId // Include locationId for reference
+    };
+    
+    toggleFavorite(productToFavorite);
+  };
+
+  const navigateToProductDetail = (e) => {
     e.stopPropagation();
     console.log('Navegando a producto:', product);
     // Intentar usar id o fallback a docId si existe
     const productId = product.id || '';
     navigate(`/food/${locationId}/${productId}`);
   };
-  
-  // Basic card (collapsed)
+    // Basic card (collapsed)
   if (!showDetails) {
     return (
       <article 
-        className="w-full max-w-[351px] mx-auto h-auto min-h-[78px] bg-[#CFCFCF] shadow-md rounded-[24px] flex flex-wrap sm:flex-nowrap items-center p-3 sm:p-4 mb-4 cursor-pointer hover:bg-gray-300 transition-colors"
+        className="w-full max-w-[351px] mx-auto h-auto min-h-[78px] bg-[#CFCFCF] shadow-md rounded-[24px] flex flex-wrap sm:flex-nowrap items-center p-3 sm:p-4 mb-4 cursor-pointer hover:bg-gray-300 transition-colors relative"
         onClick={toggleDetails}
       >
         <img 
@@ -39,18 +53,36 @@ export default function ProductCard({ product, locationId }) {
           </h3>
           <p className="font-paprika text-[12px] sm:text-[14px] text-[#475569] line-clamp-1">
             {description}
-          </p>
-        </div>
-        <div className="flex flex-col items-end ml-2 flex-shrink-0">
+          </p>        </div>        <div className="flex flex-col items-end ml-2 flex-shrink-0">
           <div className="font-paprika text-[14px] sm:text-[16px] text-[#0F172A]">
-            ${price.toLocaleString()}
+            ${typeof price === 'number' ? price.toLocaleString() : price}
           </div>
         </div>
+        
+        {/* Star-shaped favorite button */}
+        <button 
+          className="absolute top-2 right-2 z-10 w-[36px] h-[30px] bg-[#FAF202] shadow-md rounded-tl-[10px] rounded-tr-[10px] rounded-bl-[10px] flex items-center justify-center"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleFavoriteClick(e);
+          }}
+          aria-label={isFavorite(product.id) ? "Remove from favorites" : "Add to favorites"}
+        >
+          {isFavorite(product.id) ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600 animate-heart-beat" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+            </svg>
+          )}
+        </button>
       </article>
     );
-  }  // Expanded card (with details)
+  }// Expanded card (with details)
   return (
-    <article className="w-full max-w-[351px] mx-auto bg-[#CFCFCF] shadow-md rounded-[24px] p-3 sm:p-4 mb-4">
+    <article className="w-full max-w-[351px] mx-auto bg-[#CFCFCF] shadow-md rounded-[24px] p-3 sm:p-4 mb-4 relative">
       <div className="flex flex-wrap sm:flex-nowrap justify-between items-start">
         <div className="flex w-full sm:w-auto items-start">
           <img 
@@ -63,16 +95,14 @@ export default function ProductCard({ product, locationId }) {
               e.target.src = `https://placehold.co/62x62/CFCFCF/FFF?text=${name.charAt(0)}`;
             }}
           />
-          <div className="ml-3 sm:ml-4 flex-1 min-w-0">
-            <h3 className="font-paprika text-[16px] sm:text-[18px] text-[#0F172A] pr-8 sm:pr-0">
+          <div className="ml-3 sm:ml-4 flex-1 min-w-0">            <h3 className="font-paprika text-[16px] sm:text-[18px] text-[#0F172A] pr-8 sm:pr-0">
               {name}
             </h3>
             <div className="font-paprika text-[14px] sm:text-[16px] text-[#0F172A]">
-              ${price.toLocaleString()}
+              ${typeof price === 'number' ? price.toLocaleString() : price}
             </div>
           </div>
-        </div>
-        <button 
+        </div>        <button 
           onClick={toggleDetails}
           className="text-gray-500 hover:text-gray-700 absolute top-3 right-3 sm:relative sm:top-auto sm:right-auto"
           aria-label="Close details"
@@ -80,6 +110,21 @@ export default function ProductCard({ product, locationId }) {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
+        </button>
+          <button 
+          className="absolute top-3 right-12 sm:relative sm:top-auto sm:right-auto text-gray-500 hover:text-red-500 transition-colors ml-2"
+          onClick={handleFavoriteClick}
+          aria-label={isFavorite(product.id) ? "Remove from favorites" : "Add to favorites"}
+        >
+          {isFavorite(product.id) ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500 animate-heart-beat" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+            </svg>
+          )}
         </button>
       </div>
       
@@ -102,6 +147,23 @@ export default function ProductCard({ product, locationId }) {
           Ver detalles
         </button>
       </div>
+      
+      {/* Star-shaped favorite button */}
+      <button 
+        className="absolute top-2 right-12 z-10 w-[36px] h-[30px] bg-[#FAF202] shadow-md rounded-tl-[10px] rounded-tr-[10px] rounded-bl-[10px] flex items-center justify-center"
+        onClick={handleFavoriteClick}
+        aria-label={isFavorite(product.id) ? "Remove from favorites" : "Add to favorites"}
+      >
+        {isFavorite(product.id) ? (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600 animate-heart-beat" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+          </svg>
+        )}
+      </button>
     </article>
   );
 }

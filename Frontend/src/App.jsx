@@ -15,6 +15,7 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CardProvider } from './context/CardContext';
 import { CartProvider } from './context/CartContext';
+import { FavoritesProvider } from './context/FavoritesContext';
 
 function AppContent() {
   const { backgroundColor, updateBackgroundColor } = useBackground();
@@ -57,13 +58,14 @@ function AppContent() {
 
 export default function App() {
   // Usamos la misma base que en vite.config.js
-  const basename = import.meta.env.VITE_BASE_PATH || '/Shopping-Application-Web/';
-  return (
+  const basename = import.meta.env.VITE_BASE_PATH || '/Shopping-Application-Web/';  return (
     <Router basename={basename}>
       <BackgroundProvider>
         <CardProvider>
           <CartProvider>
-            <AppContent />
+            <FavoritesProvider>
+              <AppContent />
+            </FavoritesProvider>
           </CartProvider>
         </CardProvider>
       </BackgroundProvider>

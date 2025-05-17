@@ -10,6 +10,7 @@ import ProductList from '../pages/POS/Inventory/ProductList';
 import ProductsPage from '../pages/Products/ProductsPage';
 import FoodPage from '../pages/Products/FoodPage';
 import CartPage from '../pages/Cart/CartPage';
+import FavoritesPage from '../pages/Products/FavoritesPage';
 
 export const routes = [
   { id: 'login', path: '/', component: LoginPage },
@@ -25,5 +26,6 @@ export const routes = [
   { id: 'food', path: '/food/:locationId/:productId', component: FoodPage },
   { id: 'inventory', path: '/inventory', component: ProductList },
   { id: 'cart', path: '/cart', component: CartPage },
+  { id: 'favorites', path: '/favorites', component: FavoritesPage },
 ]
 

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../../firebase/firebaseConfig';
 import { doc, getDoc, collection, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { useCartContext } from '../../context/CartContext';
+import { useFavorites } from '../../context/FavoritesContext';
 import StarRating from './components/StarRating';
 import RatingModal from './components/RatingModal';
 import TopBar from './components/TopBar';
@@ -13,7 +14,8 @@ export default function FoodPage() {
   const { locationId, productId } = useParams();
   const navigate = useNavigate();
   const { addToCart, cartItemsCount } = useCartContext();
-    const [product, setProduct] = useState(null);
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -266,6 +268,24 @@ export default function FoodPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
+            
+            {/* Favorite button */}
+            <button 
+              className="absolute top-4 right-4 z-10 w-[36px] h-[30px] bg-[#FAF202] shadow-md rounded-tl-[10px] rounded-tr-[10px] rounded-bl-[10px] flex items-center justify-center"
+              onClick={() => toggleFavorite({...product, id: productId, locationId})}
+              aria-label={isFavorite(productId) ? "Remove from favorites" : "Add to favorites"}
+            >
+              {isFavorite(productId) ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600 animate-heart-beat" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                </svg>
+              )}
+            </button>
+            
             <img 
               src={product.imagenURL || product.imageUrl || `https://placehold.co/640x360/CFCFCF/FFF?text=${product.nombre?.charAt(0) || 'P'}`}
               alt={product.nombre || product.name}
