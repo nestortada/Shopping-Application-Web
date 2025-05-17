@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUserProfile } from '../services/authService'; // Asegúrate de que esta función esté configurada correctamente
+import { getUserProfile } from '../services/authService';
 import Button from './Button';
 import profileIcon from '../assets/usuario.png';
 import logoutIcon from '../assets/logout.png';
@@ -21,7 +21,7 @@ export default function UserDashboard({ onClose }) {
           return;
         }
 
-        const profile = await getUserProfile(token); // Se pasa el token aquí
+        const profile = await getUserProfile(token);
         setUser(profile);
       } catch (err) {
         setError('Error al cargar el perfil: ' + err.message);
@@ -77,7 +77,7 @@ export default function UserDashboard({ onClose }) {
   if (error) {
     return (
       <div className="p-4 text-red-500 bg-red-100 rounded-lg border border-red-300">
-        <p className="font-semibold">Error al cargar el perfil:</p>
+        <p className="font-semibold">Error al cargar el perfil</p>
         <p>{error}</p>
         <button 
           onClick={() => window.location.reload()} 
@@ -146,12 +146,12 @@ export default function UserDashboard({ onClose }) {
         <ul className="space-y-3">
           {menuItems.map((item) => (
             <li key={item.id}>
-              <Button
-                text={item.label}
-                color="bg-[#2C1DBA] hover:bg-[#251796]"
+              <button
                 onClick={() => handleNavigation(item.route)}
-                className="w-full justify-start px-4 group"
-              />
+                className="w-full py-3 px-4 bg-[#2C1DBA] hover:bg-[#251796] text-white rounded-lg text-center font-paprika text-base transition-colors flex items-center justify-center"
+              >
+                {item.label}
+              </button>
             </li>
           ))}
         </ul>
@@ -160,7 +160,7 @@ export default function UserDashboard({ onClose }) {
       {/* Logout Button */}
       <button
         onClick={handleLogout}
-        className="mt-6 flex items-center justify-center w-full bg-[#2C1DBA] hover:bg-[#251796] text-white py-3 px-4 rounded-lg transition-colors group"
+        className="mt-6 w-full py-3 px-4 bg-[#2C1DBA] hover:bg-[#251796] text-white rounded-lg text-center font-paprika text-base transition-colors flex items-center justify-center"
       >
         <img 
           src={logoutIcon} 

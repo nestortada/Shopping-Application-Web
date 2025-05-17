@@ -21,7 +21,7 @@ export default function ProductRatingsModal({ isOpen, onClose, ratings }) {
             ×
           </button>
           {ratings.length === 0 ? (
-            <p className="text-gray-500">Este producto aún no tiene calificaciones.</p>
+            <p className="text-gray-500">Este producto aún no tiene calificaciones</p>
           ) : (
             <ul className="space-y-4">
               {ratings.map((r, idx) => (

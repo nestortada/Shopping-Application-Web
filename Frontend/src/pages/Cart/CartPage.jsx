@@ -239,7 +239,7 @@ export default function CartPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="flex-1 text-center text-xl font-paprika">Mi Carrito</h1>
+          <h1 className="flex-1 text-center text-xl font-paprika">Mi carrito</h1>
         </header>
         
         <div className="flex-1 flex flex-col items-center justify-center p-4">
@@ -253,7 +253,7 @@ export default function CartPage() {
             onClick={() => navigate('/productos')}
             className="bg-[#5947FF] text-white font-paprika px-6 py-3 rounded-xl hover:bg-[#4836e0] transition-colors"
           >
-            Continuar Comprando
+            Continuar comprando
           </button>
         </div>
       </div>
@@ -272,7 +272,7 @@ export default function CartPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="flex-1 text-center text-xl font-paprika">Mi Carrito</h1>
+        <h1 className="flex-1 text-center text-xl font-paprika">Mi carrito</h1>
       </header>
 
       <main className="flex-1 max-w-[360px] mx-auto w-full px-4 pt-4 pb-32">
