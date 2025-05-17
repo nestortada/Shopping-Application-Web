@@ -14,7 +14,18 @@ export default function UserDashboard({ onClose }) {
   const [showPendingOrders, setShowPendingOrders] = useState(false);
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'pending'
   const navigate = useNavigate();
-  const { getUserOrders } = useOrderContext();
+  
+  // Attempt to use OrderContext only if component is mounted within the provider
+  let orderContext;
+  try {
+    orderContext = useOrderContext();
+  } catch (e) {
+    console.warn('OrderContext not available. Some functionality will be disabled.');
+    orderContext = { getUserOrders: () => Promise.resolve([]) };
+  }
+  
+  // Safely extract getUserOrders function from context
+  const getUserOrders = orderContext?.getUserOrders || (() => Promise.resolve([]));
     useEffect(() => {
     async function fetchUserProfile() {
       try {
@@ -42,14 +53,22 @@ export default function UserDashboard({ onClose }) {
     }
 
     fetchUserProfile();
-  }, [navigate]);
-    // Function to fetch pending orders
+  }, [navigate]);  // Function to fetch pending orders
   const fetchPendingOrders = async (email) => {
-    if (!email) return;
+    if (!email || typeof getUserOrders !== 'function') {
+      console.log("Cannot fetch orders: No email provided or getUserOrders not available");
+      return;
+    }
     
     try {
       console.log("Fetching orders for:", email);
       const allOrders = await getUserOrders(email);
+      
+      if (!Array.isArray(allOrders)) {
+        console.warn('getUserOrders did not return an array', allOrders);
+        return;
+      }
+      
       console.log("Orders fetched:", allOrders.length);
       
       // Filter pending orders (not 'Ready for pickup' or 'Completed')
@@ -70,6 +89,7 @@ export default function UserDashboard({ onClose }) {
       }
     } catch (err) {
       console.error('Error fetching pending orders:', err);
+      // Don't set error state - just log to console to avoid breaking the UI
     }
   };
   const handleLogout = () => {

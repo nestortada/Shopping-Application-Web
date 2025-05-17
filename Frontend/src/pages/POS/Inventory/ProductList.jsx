@@ -7,6 +7,7 @@ import BottomNav from '../../../components/BottomNav';
 import AddProductModal from './AddProductModal';
 import DeleteProductModal from './DeleteProductModal';
 import UpdateProductModal from './UpdateProductModal';
+import NotificationBell from '../../../components/NotificationBell';
 import barcodeIcon from '../../../assets/codigo-de-barras.png';
 import deleteIcon from '../../../assets/basura.png';
 import editIcon from '../../../assets/editar.png';
@@ -126,8 +127,7 @@ export default function ProductList() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto pb-24">
-        {/* Header */}
+      <div className="max-w-4xl mx-auto pb-24">        {/* Header */}
         <header className="sticky top-0 bg-[#1D1981] shadow-lg rounded-b-lg">
           <div className="flex items-center justify-between px-4 py-3">
             <button 
@@ -140,12 +140,15 @@ export default function ProductList() {
               </svg>
             </button>
             <h1 className="text-white text-xl font-semibold">Inventario</h1>
-            <button 
-              aria-label="Código de barras" 
-              className="p-2 hover:bg-[#2d2991] rounded-full transition-colors"
-            >
-              <img src={barcodeIcon} alt="Código de barras" className="w-6 h-6 object-contain" />
-            </button>
+            <div className="flex items-center space-x-2">
+              <NotificationBell />
+              <button 
+                aria-label="Código de barras" 
+                className="p-2 hover:bg-[#2d2991] rounded-full transition-colors"
+              >
+                <img src={barcodeIcon} alt="Código de barras" className="w-6 h-6 object-contain" />
+              </button>
+            </div>
           </div>
         </header>
 

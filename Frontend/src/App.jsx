@@ -16,6 +16,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { CardProvider } from './context/CardContext';
 import { CartProvider } from './context/CartContext';
 import { FavoritesProvider } from './context/FavoritesContext';
+import { Toaster } from 'react-hot-toast';
 
 function AppContent() {
   const { backgroundColor, updateBackgroundColor } = useBackground();
@@ -65,6 +66,29 @@ export default function App() {
           <CartProvider>
             <FavoritesProvider>
               <AppContent />
+              <Toaster 
+                position="top-right"
+                reverseOrder={false}
+                gutter={8}
+                toastOptions={{
+                  duration: 5000,
+                  style: {
+                    background: '#363636',
+                    color: '#fff',
+                  },
+                    success: {
+                      duration: 3000,
+                      style: {
+                        background: '#1D1981',
+                      },
+                    },
+                    error: {
+                      duration: 5000,
+                      style: {
+                        background: '#d73838',
+                      },                  },
+                }}
+              />
             </FavoritesProvider>
           </CartProvider>
         </CardProvider>

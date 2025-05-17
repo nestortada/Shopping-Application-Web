@@ -4,6 +4,8 @@ import { db, storage } from '../../../firebase/firebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth } from '../../../firebase/firebaseConfig';
+import { useNotifications } from '../../../context/NotificationContext';
+import { successToast, errorToast } from '../../../utils/toastUtils.jsx';
 
 export default function AddProductModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -19,6 +21,7 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { notifyFavoriteProductUpdate } = useNotifications();
 
   const categorias = [
     'Bebida Caliente',
@@ -42,17 +45,25 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }) {
     setError('');
 
     try {
+      // Get the user's email to determine the collection
+      const user = auth.currentUser;
+      const userEmail = user ? user.email : null;
+      
+      if (!userEmail || !userEmail.endsWith('@sabanapos.edu.co')) {
+        throw new Error('Acceso no autorizado. Esta operación solo puede ser realizada por usuarios POS.');
+      }
+      
+      // Extract location name from email (e.g., meson@sabanapos.edu.co -> meson)
+      const locationName = userEmail.split('@')[0].toLowerCase();
+      
       // 1. Subir imagen al Storage
       let imageURL = '';
       if (formData.imagen) {
         const imgRef = ref(storage, `productos/${formData.imagen.name}`);
         await uploadBytes(imgRef, formData.imagen);
         imageURL = await getDownloadURL(imgRef);
-      }
-
-      // 2. Guardar datos en Firestore
-      // Puedes cambiar "productos" por el nombre de colección que necesites
-      await addDoc(collection(db, "meson"), {
+      }      // 2. Guardar datos en Firestore
+      const docRef = await addDoc(collection(db, locationName), {
         id: formData.id,
         nombre: formData.nombre,
         categoria: formData.categoria,
@@ -60,10 +71,24 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }) {
         ingredientes: formData.ingredientes,
         stock: Number(formData.stock),
         precio: Number(formData.precio),
-        imagenURL: imageURL,
-        // No guardes el objeto File
+        imagenURL: imageURL
       });
 
+      // 3. Send notification for the new product
+      if (Number(formData.stock) > 0) {
+        await notifyFavoriteProductUpdate(
+          {
+            id: docRef.id,
+            nombre: formData.nombre
+          },
+          'stock',
+          locationName
+        );
+      }
+
+      // Show success toast notification
+      successToast(`Producto "${formData.nombre}" agregado con éxito`);
+      
       onSuccess?.();
       onClose();
       // Opcional: limpia el formulario si lo deseas
@@ -77,9 +102,9 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }) {
         precio: '',
         imagen: null
       });
-    } catch (error) {
-      console.error("Error al guardar producto:", error);
+    } catch (error) {      console.error("Error al guardar producto:", error);
       setError("Hubo un error al guardar el producto.");
+      errorToast(`Error al añadir producto: ${error.message}`);
     } finally {
       setIsLoading(false);
     }

@@ -14,6 +14,7 @@ import FavoritesPage from '../pages/Products/FavoritesPage';
 import StatusOrderPage from '../pages/Client/Order/StatusOrderPage';
 import MyOrdersPage from '../pages/Client/Order/MyOrdersPage';
 import PosOrdersPage from '../pages/POS/Orders/PosOrdersPage';
+import TestToastPage from '../pages/TestToastPage';
 
 export const routes = [
   { id: 'login', path: '/', component: LoginPage },
@@ -34,5 +35,6 @@ export const routes = [
   { id: 'status-order', path: '/client/order/status', component: StatusOrderPage },
   { id: 'my-orders', path: '/client/orders', component: MyOrdersPage },
   { id: 'pos-orders', path: '/pos/orders', component: PosOrdersPage },
+  { id: 'test-toast', path: '/test-toast', component: TestToastPage },
 ]
 

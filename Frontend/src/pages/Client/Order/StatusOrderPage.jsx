@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useOrderContext } from '../../../context/OrderContext';
+import NotificationBell from '../../../components/NotificationBell';
+import { infoToast, successToast, errorToast } from '../../../utils/toastUtils.jsx';
 
 export default function StatusOrderPage() {
   const navigate = useNavigate();
@@ -30,7 +32,6 @@ export default function StatusOrderPage() {
       });
     }
   }, [location.search, getOrderById]);
-
   // Update UI when current order changes
   useEffect(() => {
     if (currentOrder) {
@@ -42,6 +43,24 @@ export default function StatusOrderPage() {
       // Set the current step based on status
       const stepIndex = steps.findIndex(step => step.value === currentOrder.orderStatus);
       setCurrentStep(stepIndex >= 0 ? stepIndex : 0);
+      
+      // Show toast based on current status
+      const orderNumber = currentOrder.orderNumber || localStorage.getItem('orderNumber');
+      
+      if (currentOrder.orderStatus === 'Ready for pickup') {
+        successToast(`¡Tu pedido #${orderNumber} está listo para recoger!`, {
+          icon: '🔔',
+          style: {
+            background: '#28a745',
+          },
+          duration: 5000
+        });
+      } else if (currentOrder.orderStatus === 'In preparation') {
+        infoToast(`Tu pedido #${orderNumber} está siendo preparado`, {
+          icon: '👨‍🍳',
+          duration: 3000
+        });
+      }
     } else {
       console.log("No current order, using localStorage");
       // If no order in context, try to get from localStorage
@@ -76,7 +95,6 @@ export default function StatusOrderPage() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
@@ -89,10 +107,13 @@ export default function StatusOrderPage() {
         >
           Volver al inicio
         </button>
+        {/* Show error toast */}
+        {useEffect(() => {
+          errorToast('Error al cargar tu pedido');
+        }, [])}
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
@@ -107,6 +128,7 @@ export default function StatusOrderPage() {
           </svg>
         </button>
         <h1 className="flex-1 text-center text-xl font-paprika">Estado del Pedido</h1>
+        <NotificationBell />
       </header>
 
       {/* Main content */}

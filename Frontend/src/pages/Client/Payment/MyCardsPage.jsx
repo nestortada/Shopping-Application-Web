@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCardContext } from '../../../context/CardContext';
 import CardItem from '../../../components/CardItem';
 import DeleteCardModal from '../../../components/DeleteCardModal';
+import NotificationBell from '../../../components/NotificationBell';
 
 export default function MyCardsPage() {
   const navigate = useNavigate();
@@ -56,11 +57,11 @@ export default function MyCardsPage() {
   };
 
   return (
-    <div className="relative flex flex-col h-screen bg-[#FBFBFA]">
-      {/* Header */}
+    <div className="relative flex flex-col h-screen bg-[#FBFBFA]">      {/* Header */}
       <header className="bg-[#3822B4] text-white flex items-center px-4 py-3">
         <button onClick={handleBackClick} className="text-2xl font-bold">←</button>
         <h1 className="flex-1 text-center text-lg font-bold">Mis tarjetas</h1>
+        <NotificationBell />
       </header>
 
       {/* Tarjetas */}

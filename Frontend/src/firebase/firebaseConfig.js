@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth } from "firebase/auth";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBmsYf38R_kFJRHqdmPCWq4KvYPcm_St8c",
@@ -21,4 +22,45 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
 
-export { db, storage, auth };
+// Initialize Firebase Cloud Messaging
+let messaging;
+try {
+  messaging = getMessaging(app);
+} catch (error) {
+  console.error('Firebase messaging is not supported in this environment:', error);
+}
+
+// Request permission and get token
+export const requestNotificationPermission = async () => {
+  try {
+    if (!messaging) return null;
+    
+    console.log('Requesting notification permission...');
+    const permission = await Notification.requestPermission();
+    
+    if (permission === 'granted') {      // Get the token
+      return await getToken(messaging, {
+        vapidKey: 'BMNPqMai7MIuyxjRuZ1CkzQHTpziqDUL4c6bnNgoN6s1iXXjKQce-ytOp3OPlDEM4tLP4fDaVUMO_LaT0V3nBFg'
+      });
+    } else {
+      console.log('Notification permission denied');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error getting notification permission:', error);
+    return null;
+  }
+};
+
+// Handle foreground messages
+export const onMessageListener = () => {
+  if (!messaging) return Promise.resolve();
+  
+  return new Promise((resolve) => {
+    onMessage(messaging, (payload) => {
+      resolve(payload);
+    });
+  });
+};
+
+export { db, storage, auth, messaging };

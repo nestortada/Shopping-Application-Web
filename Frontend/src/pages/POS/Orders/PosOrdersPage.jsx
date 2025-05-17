@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/firebaseConfig';
 import { useOrderContext } from '../../../context/OrderContext';
+import { useNotifications } from '../../../context/NotificationContext';
+import NotificationBell from '../../../components/NotificationBell';
+import { successToast, errorToast } from '../../../utils/toastUtils.jsx';
 
 export default function PosOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -12,6 +15,7 @@ export default function PosOrdersPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
   const { updateOrderStatus } = useOrderContext();
+  const { notifyOrderStatusChange } = useNotifications();
   useEffect(() => {
     const fetchPosOrders = async () => {
       try {
@@ -62,6 +66,19 @@ export default function PosOrdersPage() {
       console.log(`Updating order ${orderId} to "In preparation"`);
       await updateOrderStatus(orderId, 'In preparation');
       
+      // Find the order to get its details
+      const orderToUpdate = orders.find(order => order.id === orderId);
+      
+      // Send notification about order status change
+      if (orderToUpdate) {
+        await notifyOrderStatusChange(orderToUpdate, 'In preparation');
+        
+        // Show success toast
+        successToast(`Pedido #${orderToUpdate.orderNumber || orderId} marcado como "En preparación"`, {
+          icon: '👨‍🍳',
+        });
+      }
+      
       // Update the local state to reflect the change
       setOrders(prevOrders => 
         prevOrders.map(order => 
@@ -77,14 +94,32 @@ export default function PosOrdersPage() {
     } catch (err) {
       console.error('Error updating order status:', err);
       setError('Error al actualizar el estado del pedido');
+      
+      // Show error toast
+      errorToast('Error al actualizar el estado del pedido');
     }
   };
-
   // Handle marking order as "Ready for pickup"
   const handleMarkReady = async (orderId) => {
     try {
       console.log(`Updating order ${orderId} to "Ready for pickup"`);
       await updateOrderStatus(orderId, 'Ready for pickup');
+      
+      // Find the order to get its details
+      const orderToUpdate = orders.find(order => order.id === orderId);
+      
+      // Send notification about order status change
+      if (orderToUpdate) {
+        await notifyOrderStatusChange(orderToUpdate, 'Ready for pickup');
+        
+        // Show success toast
+        successToast(`Pedido #${orderToUpdate.orderNumber || orderId} listo para entrega`, {
+          icon: '🔔',
+          style: {
+            background: '#28a745',
+          },
+        });
+      }
       
       // Show success notification with checkmark for 1 second
       setShowSuccess(true);
@@ -97,6 +132,9 @@ export default function PosOrdersPage() {
     } catch (err) {
       console.error('Error updating order status:', err);
       setError('Error al actualizar el estado del pedido');
+      
+      // Show error toast
+      errorToast('Error al marcar el pedido como listo');
     }
   };
 
@@ -157,9 +195,7 @@ export default function PosOrdersPage() {
             </svg>
           </div>
         </div>
-      )}
-
-      {/* Header */}
+      )}      {/* Header */}
       <header className="bg-[#1D1981] text-white px-4 py-3 flex items-center">
         <button 
           onClick={() => navigate(-1)}
@@ -171,6 +207,7 @@ export default function PosOrdersPage() {
           </svg>
         </button>
         <h1 className="flex-1 text-center text-xl font-paprika">Pedidos</h1>
+        <NotificationBell />
       </header>
 
       {/* Main content */}

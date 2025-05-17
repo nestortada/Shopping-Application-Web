@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCartContext } from '../../context/CartContext';
 import { useCardContext } from '../../context/CardContext';
 import { useOrderContext } from '../../context/OrderContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { collection, getDocs, doc, updateDoc, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import { validateOrderAvailability } from '../../services/orderService';
@@ -12,6 +13,7 @@ import Modal from '../../components/Modal';
 import CardModal from '../../components/CardModal';
 import BalanceModal from '../../components/BalanceModal';
 import Drawer from '../../components/Drawer';
+import { successToast, errorToast, warningToast } from '../../utils/toastUtils.jsx';
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -25,6 +27,7 @@ export default function CartPage() {
   } = useCartContext();
   const { cards, fetchCards, loading: cardsLoading } = useCardContext();
   const { createOrder } = useOrderContext(); // Import createOrder from OrderContext
+  const { notifyNewOrder, notifyLowStock } = useNotifications(); // Import notification functions
   const [userRole, setUserRole] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -201,11 +204,14 @@ export default function CartPage() {
       
       console.log('handleCheckout - locationId:', locationId);
       console.log('All localStorage keys:', Object.keys(localStorage));
-      
-      if (!locationId && userRole === 'CLIENT') {
+        if (!locationId && userRole === 'CLIENT') {
         setModalTitle('Selección de Local Requerida');
         setModalMessage('Para continuar con la compra, primero debes seleccionar un local. Por favor, ve a la página de ubicaciones usando el ícono del mapa en la barra inferior y selecciona un local. Una vez seleccionado, regresa al carrito para completar tu compra.');
         setIsModalOpen(true);
+        
+        // Show warning toast
+        warningToast('Selecciona un local antes de realizar tu pedido');
+        
         return;
       }
       setIsDrawerOpen(true);
@@ -254,11 +260,14 @@ export default function CartPage() {
           allAvailable = false;
         }
       }
-      
-      if (!allAvailable) {
+        if (!allAvailable) {
         setModalTitle('Error');
         setModalMessage(`Ya no hay más disponibles de uno o más productos: ${outOfStockItems.join(', ')}`);
         setIsModalOpen(true);
+        
+        // Show error toast
+        errorToast('Algunos productos ya no están disponibles');
+        
         return false;
       }
       
@@ -270,8 +279,7 @@ export default function CartPage() {
       setIsModalOpen(true);
       return false;
     }
-  };
-  // Actualizar stock después de confirmación de pago para clientes
+  };  // Actualizar stock después de confirmación de pago para clientes
   const updateProductStock = async (locationId) => {
     try {
       console.log('updateProductStock - locationId:', locationId);
@@ -288,9 +296,20 @@ export default function CartPage() {
           const productDoc = querySnapshot.docs[0];
           const productRef = doc(db, locationId, productDoc.id);
           const productData = productDoc.data();
+          const newStock = (productData.stock || 0) - item.quantity;
+          
           await updateDoc(productRef, {
-            stock: (productData.stock || 0) - item.quantity
+            stock: newStock
           });
+          
+          // Check if stock is running low (≤ 5)
+          if (newStock <= 5) {
+            // Notify POS users about low stock
+            await notifyLowStock({
+              id: item.id,
+              nombre: item.name
+            }, locationId);
+          }
         }
       }
       return true;
@@ -299,18 +318,23 @@ export default function CartPage() {
       return false;
     }
   };
-
   // Validar cupón (simulado)
   const validateCoupon = () => {
     if (couponCode && couponCode.match(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{3}$/i)) {
       setDiscount(2000); // Descuento fijo de 2000 COP
       setCouponApplied(true);
+      
+      // Show success toast
+      successToast('¡Cupón aplicado! Descuento de $2,000 aplicado a tu compra');
     } else {
       setModalTitle('Cupón Inválido');
       setModalMessage('El formato del cupón es incorrecto o no existe.');
       setIsModalOpen(true);
+      
+      // Show error toast
+      errorToast('Cupón inválido');
     }
-  };  // Finalizar compra desde el drawer (para usuarios CLIENT)
+  };// Finalizar compra desde el drawer (para usuarios CLIENT)
   const handlePayment = async () => {
     if (paymentMethod === 'tarjeta' && !selectedCard) {
       setShowCardModal(true);
@@ -362,11 +386,14 @@ export default function CartPage() {
       setIsModalOpen(true);
       return;
     }
-    
-    setIsDrawerOpen(false);
+      setIsDrawerOpen(false);
     setModalTitle('Éxito');
     setModalMessage('¡Pago realizado con éxito! Tu pedido está en camino.');
     setIsModalOpen(true);
+    
+    // Show success toast
+    successToast('¡Pedido realizado con éxito! Puedes ver el estado de tu pedido en "Mis Pedidos".');
+    
     clearCart();
   };  // Manejar continuación desde modal de tarjeta
   const handleCardContinue = async () => {
@@ -454,12 +481,20 @@ export default function CartPage() {
           totalAmount: getTotalPrice() - (couponApplied ? discount : 0),
           paymentMethod: 'tarjeta',
           products: orderProducts,
-          locationId: locationId
+          locationId: locationId,
+          locationName: restaurantName
         };
         
         // Save order to Firestore using imported createOrder function
         try {
           const newOrder = await createOrder(orderData);
+          
+          // Send notification to POS user
+          await notifyNewOrder({
+            locationId: locationId,
+            locationName: restaurantName,
+            orderId: newOrder.id
+          });
           
           // Save order data to localStorage for non-context usage
           localStorage.setItem('orderNumber', orderNumber.toString());
@@ -585,12 +620,20 @@ export default function CartPage() {
           totalAmount: getTotalPrice() - (couponApplied ? discount : 0),
           paymentMethod: 'saldo',
           products: orderProducts,
-          locationId: locationId
+          locationId: locationId,
+          locationName: restaurantName
         };
         
         // Save order to Firestore using imported createOrder function
         try {
           const newOrder = await createOrder(orderData);
+          
+          // Send notification to POS user
+          await notifyNewOrder({
+            locationId: locationId,
+            locationName: restaurantName,
+            orderId: newOrder.id
+          });
           
           // Save order data to localStorage for non-context usage
           localStorage.setItem('orderNumber', orderNumber.toString());

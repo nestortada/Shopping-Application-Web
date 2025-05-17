@@ -4,6 +4,8 @@ import { db, storage } from '../../../firebase/firebaseConfig';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getUserProfile } from '../../../services/authService';
+import { useNotifications } from '../../../context/NotificationContext';
+import { successToast, errorToast, warningToast } from '../../../utils/toastUtils.jsx';
 
 export default function UpdateProductModal({ isOpen, onClose, product, onUpdateSuccess }) {
   const categorias = [
@@ -14,6 +16,7 @@ export default function UpdateProductModal({ isOpen, onClose, product, onUpdateS
     'Hamburguesas'
   ];
 
+  const { notifyFavoriteProductUpdate } = useNotifications();
   const [formData, setFormData] = useState({
     nombre: '',
     categoria: '',
@@ -145,7 +148,14 @@ export default function UpdateProductModal({ isOpen, onClose, product, onUpdateS
         imageURL = await getDownloadURL(imgRef);
       }
 
-      // Actualizar el documento usando el ID real
+      const originalStock = product.stock || 0;
+      const newStock = Number(formData.stock);
+      const stockIncreased = newStock > originalStock;
+      const detailsChanged = 
+        formData.nombre !== product.nombre ||
+        formData.descripcion !== product.descripcion ||
+        formData.precio !== product.precio;
+        // Actualizar el documento usando el ID real
       await updateDoc(doc(db, collectionName, docId), {
         nombre: formData.nombre,
         categoria: formData.categoria,
@@ -157,6 +167,65 @@ export default function UpdateProductModal({ isOpen, onClose, product, onUpdateS
       });
       
       console.log('Producto actualizado con éxito');
+      
+      // Show success toast
+      successToast(`Producto "${formData.nombre}" actualizado con éxito`);
+
+      // Send notification for favorite product updates
+      if (stockIncreased) {
+        await notifyFavoriteProductUpdate(
+          {
+            id: docId,
+            nombre: formData.nombre
+          },
+          'stock',
+          collectionName
+        );
+        
+        // Show specific stock increase toast
+        if (newStock > originalStock + 10) {
+          successToast(`¡Stock de "${formData.nombre}" restaurado!`, {
+            icon: '📦',
+            style: {
+              background: '#28a745',
+            },
+          });
+        }
+      }
+        if (detailsChanged) {
+        await notifyFavoriteProductUpdate(
+          {
+            id: docId,
+            nombre: formData.nombre
+          },
+          'details',
+          collectionName
+        );
+        
+        // Show details change toast
+        if (formData.precio !== product.precio) {
+          // Price changed
+          const priceChange = formData.precio - product.precio;
+          if (priceChange < 0) {
+            // Price decreased
+            successToast(`Precio de "${formData.nombre}" reducido a $${formData.precio}`, {
+              icon: '💰',
+              style: {
+                background: '#28a745',
+              },
+            });
+          } else if (priceChange > 0) {
+            // Price increased
+            warningToast(`Precio de "${formData.nombre}" aumentado a $${formData.precio}`, {
+              icon: '💸',
+              style: {
+                background: '#ffc107',
+                color: '#000',
+              },
+            });
+          }
+        }
+      }
 
       // Actualizar la UI y cerrar modal
       onUpdateSuccess(docId, {
@@ -167,10 +236,12 @@ export default function UpdateProductModal({ isOpen, onClose, product, onUpdateS
         imagenURL: imageURL
       });
       
-      onClose();
-    } catch (error) {
+      onClose();    } catch (error) {
       console.error('Error al actualizar producto:', error);
       setError(error.message);
+      
+      // Show error toast
+      errorToast(`Error al actualizar producto: ${error.message}`);
     } finally {
       setIsLoading(false);
     }

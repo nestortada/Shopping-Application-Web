@@ -1,0 +1,108 @@
+/* src/styles/toast.css */
+/* Custom toast styles */
+
+/* Success toast */
+.success-toast {
+  background-color: #1D1981 !important;
+  color: white !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Error toast */
+.error-toast {
+  background-color: #d73838 !important;
+  color: white !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Info toast */
+.info-toast {
+  background-color: #3498db !important;
+  color: white !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Warning toast */
+.warning-toast {
+  background-color: #f39c12 !important;
+  color: white !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Toast animations */
+@keyframes toast-enter {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-exit {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+/* Apply animations to toast */
+.react-hot-toast-enter {
+  animation: toast-enter 0.3s ease-out;
+}
+
+.react-hot-toast-exit {
+  animation: toast-exit 0.3s ease-in forwards;
+}
+
+/* Toast close button */
+.toast-close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.toast-close-button:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Toast action button */
+.toast-action-button {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 4px 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 8px;
+  font-size: 0.8rem;
+}
+
+.toast-action-button:hover {
+  background: rgba(255, 255, 255, 0.4);
+}

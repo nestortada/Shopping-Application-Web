@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrderContext } from '../../../context/OrderContext';
+import NotificationBell from '../../../components/NotificationBell';
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
@@ -113,8 +114,7 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
+    <div className="min-h-screen bg-white flex flex-col">      {/* Header */}
       <header className="bg-[#1D1981] text-white px-4 py-3 flex items-center">
         <button 
           onClick={() => navigate(-1)}
@@ -126,6 +126,7 @@ export default function MyOrdersPage() {
           </svg>
         </button>
         <h1 className="flex-1 text-center text-xl font-paprika">Mis Pedidos</h1>
+        <NotificationBell />
       </header>
 
       {/* Main content */}

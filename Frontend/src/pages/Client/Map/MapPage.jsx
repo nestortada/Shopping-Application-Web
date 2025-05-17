@@ -7,6 +7,7 @@ import LocationCard from '../../../components/LocationCard';
 import MapView from '../../../components/MapView';
 import BottomNav from '../../../components/BottomNav';
 import UserDashboard from '../../../components/UserDashboard';
+import NotificationBell from '../../../components/NotificationBell';
 import cartIcon from '../../../assets/carrito.png';
 import profileIcon from '../../../assets/usuario.png';
 import Escuela from '../../../assets/escuela.png';
@@ -52,7 +53,6 @@ export default function MapPage() {
       } 
     });
   };
-
   const allLocations = [
     { id: '1', image: PuntoCafe, title: 'Mesón de La Sabana', type: 'Restaurantes' },
     { id: '2', image: Escuela, title: 'Escuela', type: 'Restaurantes' },
@@ -61,7 +61,7 @@ export default function MapPage() {
     { id: '5', image: Living, title: 'TerrazaLiving', type: 'Restaurantes' },
     { id: '6', image: Kioskos, title: 'Kioskos', type: 'Restaurantes' },
     { id: '7', image: Banderitas, title: 'Banderitas', type: 'Restaurantes' },
-    { id: '9', image: Wok, title: 'PuntoWok', type: 'Restaurantes' },
+    { id: '8', image: Wok, title: 'PuntoWok', type: 'Restaurantes' },
     { id: '9', image: PuntoVerde, title: 'Punto-Verde', type: 'Restaurantes' },
     { id: '10', image: Bolsa, title: 'Cafe-Bolsa', type: 'Cafés' },
     { id: '11', image: CafeEmbarca, title: 'Embarcadero', type: 'Cafés' },
@@ -133,18 +133,20 @@ export default function MapPage() {
       </section>
 
       {/* Contenedor principal con espaciado vertical */}
-      <div className="flex flex-col space-y-4 overflow-y-auto pb-24 px-4 pt-4">
-        {/* Barra superior con iconos */}
+      <div className="flex flex-col space-y-4 overflow-y-auto pb-24 px-4 pt-4">        {/* Barra superior con iconos */}
         <section className="bg-[#3822B4] shadow-md flex justify-between items-center px-2 py-3 rounded-md">
           <button onClick={() => setIsSidebarOpen(true)} aria-label="Perfil">
             <img src={profileIcon} alt="Perfil" className="w-10 h-10" />
           </button>
-          <button 
-            onClick={() => navigate('/cart')}
-            aria-label="Carrito"
-          >
-            <img src={cartIcon} alt="Carrito" className="w-10 h-10" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <NotificationBell />
+            <button 
+              onClick={() => navigate('/cart')}
+              aria-label="Carrito"
+            >
+              <img src={cartIcon} alt="Carrito" className="w-10 h-10" />
+            </button>
+          </div>
         </section>
 
         {/* Buscador */}

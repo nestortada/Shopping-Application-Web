@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import perfil from '../../../assets/usuario.png';
 import ubicaciones from '../../../assets/marcador-de-posicion.png';
 import carrito from '../../../assets/carrito.png';
+import NotificationBell from '../../../components/NotificationBell';
 
 export default function TopBar({ isCustomer, cartItemsCount = 0, locationTitle = '', onProfileClick }) {
   return (
@@ -20,17 +21,19 @@ export default function TopBar({ isCustomer, cartItemsCount = 0, locationTitle =
           <span className="text-white ml-2 font-paprika text-sm truncate max-w-[180px]">
             {locationTitle}
           </span>
-        )}
-      </div>
+        )}      </div>
       
-      <Link to="/cart" aria-label="Shopping cart" className="relative">
-        <img src={carrito} alt="Cart" className="w-[35px] h-[35px]" />
-        {cartItemsCount > 0 && (
-          <div className="absolute top-[-4px] right-[-4px] w-[18px] h-[19px] bg-red-600 rounded-full flex items-center justify-center text-white text-xs">
-            {cartItemsCount}
-          </div>
-        )}
-      </Link>
+      <div className="flex items-center">
+        <NotificationBell />
+        <Link to="/cart" aria-label="Shopping cart" className="relative ml-2">
+          <img src={carrito} alt="Cart" className="w-[35px] h-[35px]" />
+          {cartItemsCount > 0 && (
+            <div className="absolute top-[-4px] right-[-4px] w-[18px] h-[19px] bg-red-600 rounded-full flex items-center justify-center text-white text-xs">
+              {cartItemsCount}
+            </div>
+          )}
+        </Link>
+      </div>
     </nav>
   );
 }
