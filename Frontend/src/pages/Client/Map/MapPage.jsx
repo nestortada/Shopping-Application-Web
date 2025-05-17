@@ -63,11 +63,11 @@ export default function MapPage() {
     { id: '7', image: Banderitas, title: 'Banderitas', type: 'Restaurantes' },
     { id: '9', image: Wok, title: 'PuntoWok', type: 'Restaurantes' },
     { id: '9', image: PuntoVerde, title: 'Punto-Verde', type: 'Restaurantes' },
-    { id: '10', image: Bolsa, title: 'Café-Bolsa', type: 'Cafés' },
+    { id: '10', image: Bolsa, title: 'Cafe-Bolsa', type: 'Cafés' },
     { id: '11', image: CafeEmbarca, title: 'Embarcadero', type: 'Cafés' },
     { id: '12', image: CafeEstudio, title: 'Estudio', type: 'Cafés' },
     { id: '13', image: CafeLetras, title: 'Letras', type: 'Cafés' },
-    { id: '14', image: PuntoCafe, title: 'Punto', type: 'Cafés' },
+    { id: '14', image: PuntoCafe, title: 'Punto-cafe', type: 'Cafés' },
   ];
 
   const visible = allLocations
