@@ -8,7 +8,9 @@ export default function NotificationModal({ isOpen, onClose }) {
     notifications, 
     loading, 
     error, 
-    markAllAsRead 
+    markAllAsRead,
+    unreadCount,
+    socketConnected
   } = useNotifications();
 
   const handleMarkAllAsRead = async () => {
@@ -17,7 +19,28 @@ export default function NotificationModal({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/10 backdrop-blur-[1px] z-50 flex justify-center items-start pt-16">
       <div className="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-md mx-4 max-h-[70vh] flex flex-col animate-fadeIn">
-        <div className="flex justify-between items-center border-b p-4 bg-[#F8F9FA] rounded-t-lg">          <h2 className="text-lg font-semibold text-[#3F2EDA]">Notificaciones</h2>
+        <div className="flex justify-between items-center border-b p-4 bg-[#F8F9FA] rounded-t-lg">
+          <div>
+            <h2 className="text-lg font-semibold text-[#3F2EDA]">Notificaciones</h2>
+            <div className="flex items-center text-xs text-gray-500 mt-1">
+              {socketConnected ? (
+                <span className="flex items-center text-green-600">
+                  <span className="h-2 w-2 bg-green-500 rounded-full mr-1"></span>
+                  Live updates active
+                </span>
+              ) : (
+                <span className="flex items-center text-gray-500">
+                  <span className="h-2 w-2 bg-gray-300 rounded-full mr-1"></span>
+                  Using local updates
+                </span>
+              )}
+              {unreadCount > 0 && (
+                <span className="ml-2">
+                  {unreadCount} unread
+                </span>
+              )}
+            </div>
+          </div>
           <div className="flex space-x-2">
             {notifications.some(n => !n.read) && (
               <button 
@@ -37,7 +60,7 @@ export default function NotificationModal({ isOpen, onClose }) {
               </svg>
             </button>
           </div>
-        </div>        <div className="overflow-y-auto p-4 flex-grow">
+        </div><div className="overflow-y-auto p-4 flex-grow">
           {loading ? (
             <div className="flex justify-center items-center h-24">
               <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-[#3F2EDA] border-opacity-50 border-r-2 border-b-2"></div>

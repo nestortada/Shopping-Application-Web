@@ -8,6 +8,11 @@ import {
   registerServiceWorker
 } from '../services/notificationService';
 import {
+  connectToSocketIO,
+  subscribeToNotifications,
+  disconnectFromSocketIO
+} from '../services/socketService';
+import {
   successToast,
   errorToast,
   infoToast,
@@ -25,9 +30,60 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [socketConnected, setSocketConnected] = useState(false);
 
-  // Get current user's email
+  // Get current user's email and role
   const userEmail = localStorage.getItem('userEmail');
+  const userRole = localStorage.getItem('userRole');
+  const locationId = localStorage.getItem('locationId');
+
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    if (!userEmail) return;
+    
+    // Connect to Socket.IO server with user email and location ID
+    const socket = connectToSocketIO(userEmail, locationId);
+    
+    if (socket) {
+      setSocketConnected(true);
+      
+      // Subscribe to notifications
+      const unsubscribe = subscribeToNotifications((notification) => {
+        // Add the received notification to the state
+        console.log('Received Socket.IO notification:', notification);
+        
+        // Add notification to Firestore
+        addNotification({
+          userEmail: userEmail,
+          message: notification.message,
+          type: notification.type,
+          orderId: notification.orderId,
+          productId: notification.productId,
+          locationId: notification.locationId,
+          meta: notification.meta || {}
+        });
+        
+        // Show toast notification based on notification type
+        if (notification.type === 'order') {
+          newOrderToast(notification.meta?.order?.locationName || '');
+        } else if (notification.type === 'stock') {
+          lowStockToast(notification.meta?.product?.nombre || notification.meta?.product?.name || '');
+        } else if (notification.type === 'order_status') {
+          orderStatusToast(notification.status, notification.orderId);
+        } else if (notification.type === 'favorite_product') {
+          favoriteProductUpdateToast(notification.meta?.product?.nombre || notification.meta?.product?.name || '');
+        } else {
+          infoToast(notification.message);
+        }
+      });
+      
+      // Clean up on unmount
+      return () => {
+        unsubscribe();
+        disconnectFromSocketIO();
+      };
+    }
+  }, [userEmail, locationId]);
 
   // Initialize FCM (Firebase Cloud Messaging)
   useEffect(() => {
@@ -334,7 +390,6 @@ export const NotificationProvider = ({ children }) => {
       return false;
     }
   };
-
   return (
     <NotificationContext.Provider
       value={{
@@ -342,6 +397,7 @@ export const NotificationProvider = ({ children }) => {
         unreadCount,
         loading,
         error,
+        socketConnected,
         addNotification,
         markAsRead,
         markAllAsRead,

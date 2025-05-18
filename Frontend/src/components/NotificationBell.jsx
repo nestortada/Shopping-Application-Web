@@ -4,7 +4,7 @@ import NotificationModal from './NotificationModal';
 import bellIcon from '../assets/bell.svg';
 
 export default function NotificationBell() {
-  const { unreadCount } = useNotifications();
+  const { unreadCount, socketConnected } = useNotifications();
   const [showModal, setShowModal] = useState(false);
 
   const toggleModal = () => {
@@ -23,6 +23,10 @@ export default function NotificationBell() {
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
+        )}
+        {/* Socket.IO connection indicator */}
+        {socketConnected && (
+          <span className="absolute -bottom-1 -right-1 bg-green-500 rounded-full w-2 h-2"></span>
         )}
       </button>
       

@@ -3,12 +3,67 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { MongoClient, ServerApiVersion } from 'mongodb';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import authRoutes from './api/routes/auth.js';
 import customerRoutes from './api/routes/customer.js';
 import orderRoutes from './api/routes/orders.js';
+import notificationRoutes from './api/routes/notification.js';
 
 dotenv.config();
 const app = express();
+const httpServer = createServer(app);
+
+// Initialize Socket.IO
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.NODE_ENV !== 'production' ? true : process.env.FRONTEND_URLS?.split(',').map(u => u.trim()),
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+// Create a notifications namespace for Socket.IO
+const notificationsNamespace = io.of('/notifications');
+
+// Export the namespace so it can be used in other files
+export { notificationsNamespace };
+
+// Handle socket connections - authentication and room joining
+notificationsNamespace.use((socket, next) => {
+  // Get token from handshake auth
+  const token = socket.handshake.auth.token;
+  const userEmail = socket.handshake.auth.userEmail;
+  const locationId = socket.handshake.auth.locationId;
+  
+  if (!userEmail) {
+    return next(new Error('User email not provided'));
+  }
+  
+  // In a real app, you'd validate the JWT token here
+  // For simplicity, we'll just check if userEmail exists
+  socket.userEmail = userEmail;
+  socket.locationId = locationId;
+  next();
+});
+
+// Handle socket connections
+notificationsNamespace.on('connection', (socket) => {
+  console.log(`User connected: ${socket.userEmail}`);
+  
+  // Join user to their personal room (based on email)
+  socket.join(socket.userEmail);
+  
+  // Join location room if location ID provided
+  if (socket.locationId) {
+    socket.join(`location-${socket.locationId}`);
+  }
+  
+  // Listen for client-side disconnect
+  socket.on('disconnect', () => {
+    console.log(`User disconnected: ${socket.userEmail}`);
+  });
+});
 
 // Cargamos los orígenes permitidos desde FRONTEND_URLS
 const allowedOrigins = process.env.FRONTEND_URLS
@@ -64,11 +119,9 @@ async function connectToDatabase() {
   return { client, db };
 }
 
-// Para desarrollo local
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => console.log(`✅ Servidor corriendo en puerto ${PORT}`));
-}
+// Para todos los entornos (desarrollo y producción)
+const PORT = process.env.PORT || 5000;
+httpServer.listen(PORT, () => console.log(`✅ Servidor corriendo en puerto ${PORT} con Socket.IO`));
 
 // Configurar rutas después de la conexión a la base de datos
 app.use(async (req, res, next) => {
@@ -85,6 +138,7 @@ app.use(async (req, res, next) => {
 app.use('/api/v1/auth', authRoutes());
 app.use('/api/v1/customers', customerRoutes());
 app.use('/api/v1/orders', orderRoutes());
+app.use('/api/v1/notifications', notificationRoutes());
 
 // Ruta de healthcheck
 app.get('/api/health', (req, res) => {

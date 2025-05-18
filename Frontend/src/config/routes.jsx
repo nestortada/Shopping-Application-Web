@@ -15,6 +15,7 @@ import StatusOrderPage from '../pages/Client/Order/StatusOrderPage';
 import MyOrdersPage from '../pages/Client/Order/MyOrdersPage';
 import PosOrdersPage from '../pages/POS/Orders/PosOrdersPage';
 import TestToastPage from '../pages/TestToastPage';
+import TestNotificationsPage from '../pages/TestNotificationsPage';
 
 export const routes = [
   { id: 'login', path: '/', component: LoginPage },
@@ -31,10 +32,10 @@ export const routes = [
   { id: 'food', path: '/food/:locationId/:productId', component: FoodPage },
   { id: 'inventory', path: '/inventory', component: ProductList },
   { id: 'cart', path: '/cart', component: CartPage },
-  { id: 'favorites', path: '/favorites', component: FavoritesPage },
-  { id: 'status-order', path: '/client/order/status', component: StatusOrderPage },
+  { id: 'favorites', path: '/favorites', component: FavoritesPage },  { id: 'status-order', path: '/client/order/status', component: StatusOrderPage },
   { id: 'my-orders', path: '/client/orders', component: MyOrdersPage },
   { id: 'pos-orders', path: '/pos/orders', component: PosOrdersPage },
   { id: 'test-toast', path: '/test-toast', component: TestToastPage },
+  { id: 'test-notifications', path: '/test-notifications', component: TestNotificationsPage },
 ]
 
