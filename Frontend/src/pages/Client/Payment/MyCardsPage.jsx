@@ -75,7 +75,7 @@ export default function MyCardsPage() {
         {!isAllowed ? (
           <div className="bg-white rounded-lg shadow-md p-4 text-center">
             <p className="text-red-600 mb-4">
-              No tienes permiso para acceder a esta funcionalidad.
+              No tienes permiso para acceder a esta funcionalidad
             </p>
             <p className="mb-4">
               El manejo de tarjetas solo está disponible para usuarios con correo @unisabana.edu.co

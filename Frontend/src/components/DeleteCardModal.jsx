@@ -3,8 +3,8 @@ import React from 'react';
 export default function DeleteCardModal({ card, onConfirm, onCancel, error, isDeleting }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Fondo negro detrás del modal */}
-      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+      {/* Fondo negro con blur detrás del modal */}
+      <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity"></div>
 
       {/* Contenido del modal */}
       <div className="relative bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-md z-10">
@@ -18,7 +18,7 @@ export default function DeleteCardModal({ card, onConfirm, onCancel, error, isDe
         
         <p className="text-center text-gray-700 mb-4">
           ¿Realmente quieres eliminar esta tarjeta? <br />
-          <span className="font-bold">No podrás cancelar esta acción.</span>
+          <span className="font-bold">No podrás cancelar esta acción</span>
         </p>
         <div className="flex justify-around">
           <button

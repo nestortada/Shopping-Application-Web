@@ -77,7 +77,7 @@ export default function DeleteProductModal({ isOpen, onClose, product, onConfirm
 
           <div className="text-center mb-6">
             <p className="text-gray-800">
-              ¿Realmente quieres eliminar este producto? No podrás cancelar esta acción.
+              ¿Realmente quieres eliminar este producto? No podrás cancelar esta acción
             </p>
             {product && (
               <p className="mt-2 font-medium">{product.nombre}</p>
