@@ -127,13 +127,18 @@ export default function MyCardsPage() {
 
       {/* Modal de confirmación */}
       {isModalOpen && (
-        <DeleteCardModal
-          card={selectedCard}
-          onConfirm={handleDeleteCard}
-          onCancel={() => setIsModalOpen(false)}
-          error={deleteError}
-          isDeleting={isDeleting}
-        />
+        <>
+          {/* Overlay de fondo con blur */}
+          <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity"></div>
+          {/* Pop-up encima del overlay */}
+          <DeleteCardModal
+            card={selectedCard}
+            onConfirm={handleDeleteCard}
+            onCancel={() => setIsModalOpen(false)}
+            error={deleteError}
+            isDeleting={isDeleting}
+          />
+        </>
       )}
     </div>
   );

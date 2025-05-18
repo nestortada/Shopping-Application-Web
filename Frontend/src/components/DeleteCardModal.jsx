@@ -3,9 +3,7 @@ import React from 'react';
 export default function DeleteCardModal({ card, onConfirm, onCancel, error, isDeleting }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Fondo negro con blur detrás del modal */}
-      <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity"></div>
-
+      
       {/* Contenido del modal */}
       <div className="relative bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-md z-10">
         <h2 className="text-red-600 text-xl font-bold text-center mb-4">Eliminar tarjeta</h2>
