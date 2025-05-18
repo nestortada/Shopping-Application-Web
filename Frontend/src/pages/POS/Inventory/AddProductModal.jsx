@@ -262,7 +262,7 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }) {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 py-3 px-4 bg-[#1D1981] text-white rounded-[12px] font-paprika hover:bg-[#2d2991] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 py-3 px-4 bg-[#3822B4] text-white rounded-[12px] font-paprika hover:bg-[#2d2991] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {isLoading ? 'Guardando...' : 'Añadir inventario'}
             </button>

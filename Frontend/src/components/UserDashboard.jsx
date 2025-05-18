@@ -226,7 +226,7 @@ export default function UserDashboard({ onClose }) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#3F2EDA] text-white p-6">
+    <div className="flex flex-col h-full bg-[#3822B4] text-white p-6">
       {/* Close button */}
       <button
         onClick={onClose}

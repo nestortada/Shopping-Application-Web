@@ -281,7 +281,7 @@ export default function MyOrdersPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <header className="bg-[#1D1981] text-white px-4 py-3 flex items-center">
+      <header className="bg-[#3822B4] text-white px-4 py-3 flex items-center">
         <button 
           onClick={() => navigate(-1)}
           className="p-2 rounded-full hover:bg-[#2d2991] transition-colors"

@@ -687,7 +687,7 @@ export default function CartPage() {
   if (cartItemsCount === 0) {
     return (
       <div className="min-h-screen bg-[#FBFBFA] flex flex-col">
-        <header className="bg-[#1D1981] text-white px-4 py-3 flex items-center">
+        <header className="bg-[#3822B4] text-white px-4 py-3 flex items-center">
           <button 
             onClick={handleGoBack}
             className="p-2 rounded-full hover:bg-[#2d2991] transition-colors"
@@ -740,7 +740,7 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-[#FBFBFA] flex flex-col">
-      <header className="bg-[#1D1981] text-white px-4 py-3 flex items-center">
+      <header className="bg-[#3822B4] text-white px-4 py-3 flex items-center">
         <button 
           onClick={handleGoBack}
           className="p-2 rounded-full hover:bg-[#2d2991] transition-colors"
@@ -825,7 +825,7 @@ export default function CartPage() {
         <div className="max-w-[360px] mx-auto p-4">
           <button
             onClick={handleCheckout}
-            className="w-full bg-[#5947FF] text-white font-paprika py-3 rounded-xl hover:bg-[#4836e0] transition-colors"
+            className="w-full bg-[#3822B4] text-white font-paprika py-3 rounded-xl hover:bg-[#4836e0] transition-colors"
           >
             Realizar pedido
           </button>
@@ -839,7 +839,7 @@ export default function CartPage() {
         <p className="text-center mb-6">{modalMessage}</p>
         <button
           onClick={() => setIsModalOpen(false)}
-          className="w-full bg-[#5947FF] text-white font-paprika py-2 rounded-xl hover:bg-[#4836e0] transition-colors"
+          className="w-full bg-[#3822B4] text-white font-paprika py-2 rounded-xl hover:bg-[#4836e0] transition-colors"
         >
           Aceptar
         </button>
@@ -957,7 +957,7 @@ export default function CartPage() {
           
           {/* Botón de pago */}          <button
             onClick={handlePayment}
-            className="w-full bg-[#5947FF] text-white font-paprika py-3 rounded-xl hover:bg-[#4836e0] transition-colors"
+            className="w-full bg-[#3822B4] text-white font-paprika py-3 rounded-xl hover:bg-[#4836e0] transition-colors"
           >
             Pagar
           </button>
