@@ -38,10 +38,22 @@ export const requestNotificationPermission = async () => {
     console.log('Requesting notification permission...');
     const permission = await Notification.requestPermission();
     
-    if (permission === 'granted') {      // Get the token
-      return await getToken(messaging, {
-        vapidKey: 'BMNPqMai7MIuyxjRuZ1CkzQHTpziqDUL4c6bnNgoN6s1iXXjKQce-ytOp3OPlDEM4tLP4fDaVUMO_LaT0V3nBFg'
-      });
+    if (permission === 'granted') {
+      try {
+        // Get the token with error handling for getProjectConfig
+        return await getToken(messaging, {
+          vapidKey: 'BMNPqMai7MIuyxjRuZ1CkzQHTpziqDUL4c6bnNgoN6s1iXXjKQce-ytOp3OPlDEM4tLP4fDaVUMO_LaT0V3nBFg'
+        });
+      } catch (tokenError) {
+        // Handle specific Firebase API errors
+        if (tokenError.code === 'messaging/failed-service-worker-registration' ||
+            tokenError.message?.includes('getProjectConfig')) {
+          console.warn('Firebase messaging configuration issue:', tokenError.message);
+          // Continue app functionality without push notifications
+          return null;
+        }
+        throw tokenError; // Re-throw other errors
+      }
     } else {
       console.log('Notification permission denied');
       return null;

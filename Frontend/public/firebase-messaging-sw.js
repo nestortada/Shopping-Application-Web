@@ -1,6 +1,7 @@
-// Firebase Messaging Service Worker
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
+// firebase-messaging-sw.js
+
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
 // Firebase configuration
 const firebaseConfig = {
@@ -14,44 +15,43 @@ const firebaseConfig = {
   measurementId: "G-1D7RKWG7JK"
 };
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+let messaging;
 
-// Initialize Firebase Cloud Messaging
-const messaging = firebase.messaging();
+try {
+  // Inicializa Firebase
+  firebase.initializeApp(firebaseConfig);
+  // Inicializa Firebase Cloud Messaging
+  messaging = firebase.messaging();
+} catch (err) {
+  console.error('Error al inicializar Firebase en el Service Worker', err);
+}
 
-// Handle background messages
-messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
+// Manejo de mensajes en background
+if (messaging) {
+  messaging.onBackgroundMessage((payload) => {
+    console.log('[firebase-messaging-sw.js] Mensaje en background recibido:', payload);
 
-  // Customize notification
-  const notificationTitle = payload.notification?.title || 'New Notification';
-  const notificationOptions = {
-    body: payload.notification?.body || '',
-    icon: '/vite.svg',
-    badge: '/vite.svg',
-    tag: payload.data?.id || 'default', // Use as notification ID
-    data: payload.data || {}
-  };
+    const notificationTitle = payload.notification?.title || 'Nueva notificación';
+    const notificationOptions = {
+      body: payload.notification?.body || '',
+      icon: '/vite.svg',
+      badge: '/vite.svg',
+      tag: payload.data?.id || 'default',
+      data: payload.data || {}
+    };
 
-  // Show the notification
-  return self.registration.showNotification(notificationTitle, notificationOptions);
-});
+    self.registration.showNotification(notificationTitle, notificationOptions);
+  });
+}
 
-// Handle notification click
+// Manejo de clic en la notificación
 self.addEventListener('notificationclick', (event) => {
-  console.log('[firebase-messaging-sw.js] Notification clicked ', event);
-  
+  console.log('[firebase-messaging-sw.js] Notificación clicada:', event);
   event.notification.close();
-  
-  // Get notification data
-  const notificationType = event.notification.data?.type || 'default';
-  const notificationId = event.notification.data?.id || null;
-  
-  // This will open the app and bring it to the foreground
-  let urlToOpen;
-  
-  // Route based on notification type
+
+  const { type: notificationType = 'default', id: notificationId = '' } = event.notification.data || {};
+
+  let urlToOpen = '/';
   switch (notificationType) {
     case 'order':
       urlToOpen = '/pos/orders';
@@ -62,33 +62,24 @@ self.addEventListener('notificationclick', (event) => {
     case 'stock':
       urlToOpen = '/pos/inventory';
       break;
-    default:
-      urlToOpen = '/';
   }
-  
-  // Append ID if available
+
   if (notificationId) {
     urlToOpen += `?id=${notificationId}`;
   }
-  
-  // Open the specific URL
-  const baseUrl = self.location.origin;
-  const fullUrl = `${baseUrl}${urlToOpen}`;
-  
+
+  const fullUrl = new URL(urlToOpen, self.location.origin).href;
+
   event.waitUntil(
-    clients.matchAll({ type: 'window' })
-      .then((clientList) => {
-        // Check if there's already a window/tab open with the target URL
-        for (const client of clientList) {
-          if (client.url.includes(urlToOpen) && 'focus' in client) {
-            return client.focus();
-          }
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === fullUrl && 'focus' in client) {
+          return client.focus();
         }
-        
-        // If no matching window found, open a new one
-        if (clients.openWindow) {
-          return clients.openWindow(fullUrl);
-        }
-      })
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(fullUrl);
+      }
+    })
   );
 });

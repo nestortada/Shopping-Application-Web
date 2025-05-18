@@ -220,6 +220,47 @@ export const OrderProvider = ({ children }) => {
     }
   }, []);
 
+  // Function to create a repeat order
+  const repeatOrder = useCallback(async (orderId) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Get the original order
+      const originalOrder = await getOrderById(orderId);
+      
+      if (!originalOrder) {
+        throw new Error('Original order not found');
+      }
+      
+      // Create a new order based on the original
+      const repeatOrderData = {
+        userEmail: originalOrder.userEmail,
+        orderStatus: 'Confirmed',
+        orderTimestamp: new Date(),
+        estimatedTime: originalOrder.estimatedTime,
+        restaurantName: originalOrder.restaurantName,
+        totalAmount: originalOrder.totalAmount,
+        paymentMethod: originalOrder.paymentMethod,
+        products: originalOrder.products,
+        locationId: originalOrder.locationId,
+        locationName: originalOrder.locationName,
+        orderNumber: Math.floor(10000 + Math.random() * 90000) // Generate new order number
+      };
+      
+      // Create the new order
+      const newOrder = await createOrder(repeatOrderData);
+      
+      return newOrder;
+    } catch (err) {
+      console.error('Error repeating order:', err);
+      setError('Failed to repeat order. Please try again.');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [getOrderById, createOrder]);
+
   // Check for current order in localStorage when component mounts
   useEffect(() => {
     const currentOrderId = localStorage.getItem('currentOrderId');
@@ -241,6 +282,7 @@ export const OrderProvider = ({ children }) => {
         getPendingOrders,
         getOrdersByLocation,
         setCurrentOrder,
+        repeatOrder,
       }}
     >
       {children}

@@ -14,6 +14,7 @@ import {
   where, 
   getDocs 
 } from 'firebase/firestore';
+import { playBeep } from '../utils/audioUtils';
 
 // Store FCM token in Firestore
 export const saveFcmToken = async (token, userEmail) => {
@@ -104,14 +105,27 @@ export const setupForegroundNotificationListener = (callback) => {
 export const playNotificationSound = () => {
   try {
     const audio = new Audio('/sounds/notification-sound.mp3');
+    
     // Set volume to 50%
     audio.volume = 0.5;
+    
+    // Add error event listener to handle missing file
+    audio.addEventListener('error', (e) => {
+      console.warn('Notification sound file could not be loaded, using fallback beep');
+      // Use our custom beep function as fallback
+      playBeep();
+    });
+    
     audio.play()
       .catch(error => {
-        console.error('Error playing notification sound (likely user has not interacted with the page yet):', error);
+        console.error('Error playing notification sound:', error);
+        // Try fallback beep if audio.play() fails
+        playBeep();
       });
   } catch (error) {
     console.error('Error playing notification sound:', error);
+    // Try fallback beep if any other error occurs
+    playBeep();
   }
 };
 

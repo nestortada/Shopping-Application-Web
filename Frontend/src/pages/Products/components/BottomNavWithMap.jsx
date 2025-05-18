@@ -59,12 +59,11 @@ export default function BottomNavWithMap({ active = 'home', isCustomer = true })
       icon: casaIcon, 
       onClick: handleRestaurantClick, 
       iconComponent: null 
-    },
-    { 
+    },    { 
       id: 'orders', 
       label: 'Mis pedidos', 
       icon: pedidoIcon, 
-      path: '/orders', 
+      path: '/client/orders', 
       iconComponent: null 
     },
   ];
