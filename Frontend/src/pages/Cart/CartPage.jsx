@@ -827,7 +827,7 @@ export default function CartPage() {
             onClick={handleCheckout}
             className="w-full bg-[#5947FF] text-white font-paprika py-3 rounded-xl hover:bg-[#4836e0] transition-colors"
           >
-            Realizar Pedido
+            Realizar pedido
           </button>
         </div>
       </div>      {/* Modal para mensajes de éxito o error */}

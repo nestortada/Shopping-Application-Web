@@ -7,7 +7,7 @@ import NotificationBell from '../../../components/NotificationBell';
 
 export default function TopBar({ isCustomer, cartItemsCount = 0, locationTitle = '', onProfileClick }) {
   return (
-    <nav className="w-full h-[41px] bg-[#1D1981] flex items-center justify-between px-2">
+    <nav className="w-full h-[55px] bg-[#3822B4] flex items-center justify-between px-2">
       <div className="flex items-center">
         <button onClick={onProfileClick} aria-label="Profile" className="p-0 bg-transparent border-0">
           <img src={perfil} alt="Profile" className="w-[33px] h-[33px]" />
