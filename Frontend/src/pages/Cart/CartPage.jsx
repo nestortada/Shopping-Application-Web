@@ -729,7 +729,7 @@ export default function CartPage() {
                 navigate('/products');
               }
             }}
-            className="bg-[#5947FF] text-white font-paprika px-6 py-3 rounded-xl hover:bg-[#4836e0] transition-colors"
+            className="bg-[#3822B4] text-white font-paprika px-6 py-3 rounded-xl hover:bg-[#4836e0] transition-colors"
           >
             Continuar comprando
           </button>
