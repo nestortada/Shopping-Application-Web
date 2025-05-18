@@ -64,12 +64,12 @@ export default function MapPage() {
     { id: '6', image: Kioskos, title: 'Kioskos', type: 'Restaurantes' },
     { id: '7', image: Banderitas, title: 'Banderitas', type: 'Restaurantes' },
     { id: '8', image: Wok, title: 'PuntoWok', type: 'Restaurantes' },
-    { id: '9', image: PuntoVerde, title: 'Punto-Verde', type: 'Restaurantes' },
-    { id: '10', image: Bolsa, title: 'Cafe-Bolsa', type: 'Cafés' },
-    { id: '11', image: CafeEmbarca, title: 'Embarcadero', type: 'Cafés' },
+    { id: '9', image: PuntoVerde, title: 'PuntoVerde', type: 'Restaurantes' },
+    { id: '10', image: Bolsa, title: 'CafeBolsa', type: 'Cafés' },
+    { id: '11', image: CafeEmbarca, title: 'CafeEmbarcadero', type: 'Cafés' },
     { id: '12', image: CafeEstudio, title: 'Estudio', type: 'Cafés' },
     { id: '13', image: CafeLetras, title: 'Letras', type: 'Cafés' },
-    { id: '14', image: PuntoCafe, title: 'Punto-cafe', type: 'Cafés' },
+    { id: '14', image: PuntoCafe, title: 'Puntocafe', type: 'Cafés' },
   ];
   const visible = allLocations
     .filter((l) => l.type === filterType)
