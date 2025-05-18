@@ -46,13 +46,12 @@ export const NotificationProvider = ({ children }) => {
     
     if (socket) {
       setSocketConnected(true);
-      
-      // Subscribe to notifications
+        // Subscribe to notifications
       const unsubscribe = subscribeToNotifications((notification) => {
         // Add the received notification to the state
         console.log('Received Socket.IO notification:', notification);
         
-        // Add notification to Firestore
+        // Add notification to Firestore and show toast notification
         addNotification({
           userEmail: userEmail,
           message: notification.message,
@@ -60,21 +59,9 @@ export const NotificationProvider = ({ children }) => {
           orderId: notification.orderId,
           productId: notification.productId,
           locationId: notification.locationId,
-          meta: notification.meta || {}
+          meta: notification.meta || {},
+          status: notification.status
         });
-        
-        // Show toast notification based on notification type
-        if (notification.type === 'order') {
-          newOrderToast(notification.meta?.order?.locationName || '');
-        } else if (notification.type === 'stock') {
-          lowStockToast(notification.meta?.product?.nombre || notification.meta?.product?.name || '');
-        } else if (notification.type === 'order_status') {
-          orderStatusToast(notification.status, notification.orderId);
-        } else if (notification.type === 'favorite_product') {
-          favoriteProductUpdateToast(notification.meta?.product?.nombre || notification.meta?.product?.name || '');
-        } else {
-          infoToast(notification.message);
-        }
       });
       
       // Clean up on unmount
@@ -96,36 +83,64 @@ export const NotificationProvider = ({ children }) => {
         .then((success) => {
           if (success) {
             console.log('FCM initialized successfully');
-            
-            // Setup foreground notification listener
+              // Setup foreground notification listener
             setupForegroundNotificationListener((payload) => {
-              // Play notification sound
-              playNotificationSound();
-              
-              // Show toast notification based on the notification type
+              // Show notification using our notificationContext system
               const { notification } = payload;
               
               if (notification) {
                 const { title, body } = notification;
                 
-                // Determine which type of toast to show
+                // Determine notification type and add to Firestore, which will also show toast
+                let type = 'info';
+                let meta = {};
+                let orderId = null;
+                let productId = null;
+                let locationId = localStorage.getItem('locationId');
+                let status = null;
+                
                 if (body.includes('order') || title.includes('Order')) {
                   if (body.includes('ready')) {
-                    successToast(body);
+                    type = 'order_status';
+                    status = 'Ready for pickup';
+                    // Extract order ID if available in the notification
+                    if (body.includes('#')) {
+                      orderId = body.split('#')[1].split(' ')[0];
+                    }
                   } else if (body.includes('new')) {
-                    newOrderToast(body.includes('from') ? body.split('from ')[1] : '');
+                    type = 'order';
+                    meta.order = {
+                      locationName: body.includes('from') ? body.split('from ')[1] : ''
+                    };
                   } else {
-                    infoToast(body);
+                    type = 'order_status';
                   }
                 } else if (body.includes('stock') || title.includes('Stock')) {
-                  warningToast(body);
+                  type = 'stock';
+                  if (body.includes(':')) {
+                    const productName = body.split(':')[1].trim().split(' is')[0];
+                    meta.product = { name: productName };
+                  }
                 } else if (body.includes('favorite') || title.includes('Favorite')) {
-                  favoriteProductUpdateToast(
-                    body.includes('product') ? body.split('product ')[1].split(' has')[0] : ''
-                  );
-                } else {
-                  infoToast(body);
+                  type = 'favorite_product';
+                  if (body.includes('product')) {
+                    const productName = body.split('product ')[1].split(' has')[0];
+                    meta.product = { name: productName };
+                  }
                 }
+                
+                // Add notification to system
+                addNotification({
+                  userEmail,
+                  message: body,
+                  title,
+                  type,
+                  meta,
+                  orderId,
+                  productId,
+                  locationId,
+                  status
+                });
               }
             });
           }
@@ -172,9 +187,7 @@ export const NotificationProvider = ({ children }) => {
     );
 
     return () => unsubscribe();
-  }, [userEmail]);
-
-  // Add a new notification
+  }, [userEmail]);  // Add a new notification and show toast
   const addNotification = async (notificationData) => {
     try {
       const newNotification = {
@@ -183,7 +196,36 @@ export const NotificationProvider = ({ children }) => {
         read: false,
       };
       
-      await addDoc(collection(db, 'notifications'), newNotification);
+      // Save to Firestore
+      const docRef = await addDoc(collection(db, 'notifications'), newNotification);
+      
+      // Show toast notification based on notification type (unless disabled)
+      if (!notificationData.disableToast) {
+        const { type, message } = notificationData;
+        let toastId;
+        
+        if (type === 'order') {
+          toastId = newOrderToast(notificationData.meta?.order?.locationName || notificationData.locationName || '');
+        } else if (type === 'stock') {
+          toastId = lowStockToast(notificationData.meta?.product?.nombre || notificationData.meta?.product?.name || '');
+        } else if (type === 'order_status') {
+          toastId = orderStatusToast(notificationData.status, notificationData.orderId);
+        } else if (type === 'favorite_product') {
+          toastId = favoriteProductUpdateToast(notificationData.meta?.product?.nombre || notificationData.meta?.product?.name || '');
+        } else {
+          // Default to info toast with the message for other notification types
+          toastId = infoToast(message);
+        }
+        
+        // Associate toast ID with Firestore document ID
+        if (toastId && docRef.id) {
+          // We could update the Firestore document with the toast ID if needed
+          await updateDoc(doc(db, 'notifications', docRef.id), {
+            toastId
+          });
+        }
+      }
+      
       return true;
     } catch (err) {
       console.error('Error adding notification:', err);
@@ -236,7 +278,6 @@ export const NotificationProvider = ({ children }) => {
       return false;
     }
   };
-
   // Add notifications for POS users when new order is created
   const notifyNewOrder = async (orderData) => {
     try {
@@ -253,14 +294,9 @@ export const NotificationProvider = ({ children }) => {
         message: `New order received for ${locationName || 'your restaurant'}.`,
         type: 'order',
         orderId: orderData.orderId,
-        locationId: locationId
+        locationId: locationId,
+        meta: { order: orderData }
       });
-      
-      // Show toast notification for POS users
-      const userRole = localStorage.getItem('userRole');
-      if (userRole === 'pos') {
-        newOrderToast(locationName);
-      }
       
       return true;
     } catch (err) {
@@ -269,7 +305,6 @@ export const NotificationProvider = ({ children }) => {
       return false;
     }
   };
-
   // Notify about stock running low
   const notifyLowStock = async (product, locationId) => {
     try {
@@ -280,14 +315,9 @@ export const NotificationProvider = ({ children }) => {
         message: `⚠️ Product ${product.nombre || product.name} is running low on stock.`,
         type: 'stock',
         productId: product.id,
-        locationId: locationId
+        locationId: locationId,
+        meta: { product }
       });
-      
-      // Show toast notification for POS users
-      const userRole = localStorage.getItem('userRole');
-      if (userRole === 'pos') {
-        lowStockToast(product.nombre || product.name);
-      }
       
       return true;
     } catch (err) {
@@ -296,7 +326,6 @@ export const NotificationProvider = ({ children }) => {
       return false;
     }
   };
-
   // Notify about order status change
   const notifyOrderStatusChange = async (order, newStatus) => {
     try {
@@ -316,14 +345,10 @@ export const NotificationProvider = ({ children }) => {
             message,
             type: 'order_status',
             orderId: order.id,
-            locationId: order.locationId
+            locationId: order.locationId,
+            status: newStatus,
+            meta: { order }
           });
-          
-          // Show toast notification for customers
-          const userEmail = localStorage.getItem('userEmail');
-          if (userEmail === order.userEmail) {
-            orderStatusToast(newStatus, order.orderNumber || order.id);
-          }
         }
       }
       
@@ -335,15 +360,10 @@ export const NotificationProvider = ({ children }) => {
         message: `Order #${order.orderNumber || order.id} has been updated to "${newStatus}".`,
         type: 'order_status',
         orderId: order.id,
-        locationId: order.locationId
+        locationId: order.locationId,
+        status: newStatus,
+        meta: { order }
       });
-      
-      // Show toast notification for POS users
-      const userRole = localStorage.getItem('userRole');
-      const userEmail = localStorage.getItem('userEmail');
-      if (userRole === 'pos' && userEmail === posEmail) {
-        infoToast(`Order #${order.orderNumber || order.id} has been updated to "${newStatus}".`);
-      }
       
       return true;
     } catch (err) {
@@ -366,21 +386,15 @@ export const NotificationProvider = ({ children }) => {
       } else if (updateType === 'details') {
         message = `Your favorite product ${product.nombre || product.name} has been updated.`;
       }
-      
-      if (message) {
+        if (message) {
         await addNotification({
           userEmail: posEmail,
           message,
           type: 'favorite_product',
           productId: product.id,
-          locationId: locationId
+          locationId: locationId,
+          meta: { product, updateType }
         });
-        
-        // Show toast notification for users with this product as favorite
-        const userEmail = localStorage.getItem('userEmail');
-        if (userEmail === posEmail) {
-          favoriteProductUpdateToast(product.nombre || product.name);
-        }
       }
       
       return true;

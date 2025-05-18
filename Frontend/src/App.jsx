@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect } from 'react';
 import {
   BrowserRouter as Router,
@@ -16,6 +15,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { CardProvider } from './context/CardContext';
 import { CartProvider } from './context/CartContext';
 import { FavoritesProvider } from './context/FavoritesContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { Toaster } from 'react-hot-toast';
 
 function AppContent() {
@@ -63,32 +63,47 @@ export default function App() {
     <Router basename={basename}>
       <BackgroundProvider>
         <CardProvider>
-          <CartProvider>
-            <FavoritesProvider>
-              <AppContent />
-              <Toaster 
-                position="top-right"
-                reverseOrder={false}
-                gutter={8}
-                toastOptions={{
-                  duration: 5000,
-                  style: {
-                    background: '#363636',
-                    color: '#fff',
-                  },
+          <CartProvider>            <FavoritesProvider>              
+              <NotificationProvider>
+                <AppContent />              
+                <Toaster 
+                  position="top-right"
+                  reverseOrder={false}
+                  gutter={8}
+                  containerStyle={{
+                    top: 40,
+                    right: 40,
+                  }}
+                  toastOptions={{
+                    duration: 5000, // Default duration: 5 seconds
+                    style: {
+                      background: '#363636',
+                      color: '#fff',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    },
                     success: {
-                      duration: 3000,
+                      duration: 5000,
                       style: {
                         background: '#1D1981',
                       },
+                      icon: '✅',
                     },
                     error: {
-                      duration: 5000,
+                      duration: 7000, // Error messages stay longer
                       style: {
                         background: '#d73838',
-                      },                  },
-                }}
-              />
+                      },
+                      icon: '❌',
+                    },
+                    custom: {
+                      // For custom notification toasts that stay visible longer
+                      duration: 5000, // Initial display duration
+                    }
+                  }}
+                />
+              </NotificationProvider>
             </FavoritesProvider>
           </CartProvider>
         </CardProvider>

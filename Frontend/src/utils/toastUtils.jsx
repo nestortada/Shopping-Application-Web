@@ -3,15 +3,27 @@ import React from 'react';
 import toast from 'react-hot-toast';
 import { playNotificationSound } from '../services/notificationService';
 
-// Custom toast with sound
+// Custom toast with sound and persistence in notifications
 const customToast = (message, options = {}) => {
   // Play sound if not disabled
   if (!options.disableSound) {
     playNotificationSound();
   }
+
+  // Create notification ID for tracking
+  const notificationId = `notification-${Date.now()}`;
   
-  // Return the toast
-  return toast(message, options);
+  // Set default duration to show toast
+  const toastDuration = options.duration || 5000; 
+  
+  // Return the toast with modified options to display briefly
+  const toastId = toast(message, {
+    ...options,
+    id: notificationId,
+    duration: toastDuration, // Show for specified duration
+  });
+
+  return toastId;
 };
 
 // Success toast
@@ -19,7 +31,16 @@ export const successToast = (message, options = {}) => {
   return customToast(message, { 
     ...options,
     icon: '✅',
-    className: 'success-toast'
+    className: 'success-toast',
+    duration: options.duration || 5000,
+    style: {
+      background: '#1D1981',
+      color: 'white',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      ...options.style
+    }
   });
 };
 
@@ -28,7 +49,16 @@ export const errorToast = (message, options = {}) => {
   return customToast(message, { 
     ...options,
     icon: '❌',
-    className: 'error-toast'
+    className: 'error-toast',
+    duration: options.duration || 5000,
+    style: {
+      background: '#d73838',
+      color: 'white',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      ...options.style
+    }
   });
 };
 
@@ -37,7 +67,16 @@ export const infoToast = (message, options = {}) => {
   return customToast(message, { 
     ...options,
     icon: 'ℹ️',
-    className: 'info-toast'
+    className: 'info-toast',
+    duration: options.duration || 5000,
+    style: {
+      background: '#363636',
+      color: 'white',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      ...options.style
+    }
   });
 };
 
@@ -46,7 +85,16 @@ export const warningToast = (message, options = {}) => {
   return customToast(message, { 
     ...options,
     icon: '⚠️',
-    className: 'warning-toast'
+    className: 'warning-toast',
+    duration: options.duration || 5000,
+    style: {
+      background: '#ff9800',
+      color: 'black',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      ...options.style
+    }
   });
 };
 
@@ -66,13 +114,14 @@ export const newOrderToast = (locationName) => {
       </div>
     ),
     {
-      duration: 8000,
+      duration: 5000, // Show for 5 seconds
       style: {
         background: '#1D1981',
         color: 'white',
         padding: '16px',
         borderRadius: '8px',
-        minWidth: '300px'
+        minWidth: '300px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
       },
     }
   );
@@ -94,13 +143,14 @@ export const lowStockToast = (productName) => {
       </div>
     ),
     {
-      duration: 8000,
+      duration: 5000, // Show for 5 seconds
       style: {
         background: '#FF9800',
         color: 'black',
         padding: '16px',
         borderRadius: '8px',
-        minWidth: '300px'
+        minWidth: '300px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
       },
     }
   );
@@ -154,13 +204,14 @@ export const orderStatusToast = (status, orderNumber) => {
       </div>
     ),
     {
-      duration: 8000,
+      duration: 5000, // Show for 5 seconds
       style: {
         background: color,
         color: 'white',
         padding: '16px',
         borderRadius: '8px',
-        minWidth: '300px'
+        minWidth: '300px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
       },
     }
   );
@@ -182,13 +233,14 @@ export const favoriteProductUpdateToast = (productName) => {
       </div>
     ),
     {
-      duration: 8000,
+      duration: 5000, // Show for 5 seconds
       style: {
         background: '#673AB7',
         color: 'white',
         padding: '16px',
         borderRadius: '8px',
-        minWidth: '300px'
+        minWidth: '300px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
       },
     }
   );
