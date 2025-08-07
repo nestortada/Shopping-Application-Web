@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
 import { useCartContext } from '../../context/CartContext';
 import { useCardContext } from '../../context/CardContext';
 import { useOrderContext } from '../../context/OrderContext';
@@ -14,6 +15,9 @@ import CardModal from '../../components/CardModal';
 import BalanceModal from '../../components/BalanceModal';
 import Drawer from '../../components/Drawer';
 import { successToast, errorToast, warningToast } from '../../utils/toastUtils.jsx';
+
+const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -43,6 +47,7 @@ export default function CartPage() {
   const [selectedCard, setSelectedCard] = useState(null);
   const [installments, setInstallments] = useState(1);
   const [userBalance, setUserBalance] = useState(50000); // Saldo simulado del usuario// Detectar el rol del usuario basado en el dominio de email
+  const [stripeLoading, setStripeLoading] = useState(false);
   useEffect(() => {
     const userEmail = localStorage.getItem('userEmail');
     let locationId = localStorage.getItem('selectedLocationId');
@@ -683,6 +688,35 @@ export default function CartPage() {
     }
   };
 
+  const handleStripeCheckout = async () => {
+    try {
+      setStripeLoading(true);
+      const cart = cartItems.map(item => ({
+        nombre: item.name,
+        precio: item.price,
+        cantidad: item.quantity
+      }));
+
+      const res = await fetch(`${BACKEND_URL}${API_URL}/payments/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cart })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Error creating session');
+      }
+
+      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+      await stripe.redirectToCheckout({ sessionId: data.sessionId });
+    } catch (err) {
+      console.error('Stripe checkout error:', err);
+      errorToast('Error al iniciar el pago');
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
   // Mostrar mensaje de carrito vacío
   if (cartItemsCount === 0) {
     return (
@@ -955,12 +989,16 @@ export default function CartPage() {
             </div>
           </div>
           
-          {/* Botón de pago */}          <button
-            onClick={handlePayment}
-            className="w-full bg-[#3822B4] text-white font-paprika py-3 rounded-xl hover:bg-[#4836e0] transition-colors"
-          >
-            Pagar
-          </button>
+          {/* Botón de pago con Stripe */}
+          {userRole !== 'POS' && (
+            <button
+              onClick={handleStripeCheckout}
+              disabled={stripeLoading}
+              className="w-full bg-[#3822B4] text-white font-paprika py-3 rounded-xl hover:bg-[#4836e0] transition-colors"
+            >
+              {stripeLoading ? 'Procesando...' : 'Pagar con tarjeta'}
+            </button>
+          )}
         </div>
       </Drawer>
         {/* Modal de éxito para usuarios POS */}

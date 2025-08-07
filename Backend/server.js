@@ -9,6 +9,8 @@ import authRoutes from './api/routes/auth.js';
 import customerRoutes from './api/routes/customer.js';
 import orderRoutes from './api/routes/orders.js';
 import notificationRoutes from './api/routes/notification.js';
+import paymentRoutes from './api/routes/payment.js';
+import { stripeWebhook } from './api/controllers/paymentController.js';
 
 dotenv.config();
 const app = express();
@@ -95,6 +97,17 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Habilitar preflight para todas las rutas
 
+app.post('/api/v1/payments/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const { db } = await connectToDatabase();
+    req.app.set('db', db);
+    await stripeWebhook(req, res);
+  } catch (error) {
+    console.error('Webhook handler error:', error);
+    res.status(500).end();
+  }
+});
+
 app.use(express.json());
 
 // Crear una conexión reutilizable para el modo serverless
@@ -139,6 +152,7 @@ app.use('/api/v1/auth', authRoutes());
 app.use('/api/v1/customers', customerRoutes());
 app.use('/api/v1/orders', orderRoutes());
 app.use('/api/v1/notifications', notificationRoutes());
+app.use('/api/v1/payments', paymentRoutes());
 
 // Ruta de healthcheck
 app.get('/api/health', (req, res) => {
