@@ -28,7 +28,11 @@ export async function login({ email, password }) {
     throw new Error(message || 'Error al iniciar sesión');
   }
 
-  return res.json();
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem('token', data.token);
+  }
+  return data;
 }
 
 export async function getUserProfile() {
