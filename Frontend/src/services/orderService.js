@@ -2,6 +2,39 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 /**
+ * Creates a new order
+ * @param {Object} orderData - The order data
+ * @returns {Promise} - Response from the API
+ */
+export async function createOrder(orderData) {
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    throw new Error('No hay token de autenticación');
+  }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}${API_URL}/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(orderData)
+    });
+
+    if (!res.ok) {
+      throw new Error('Error al crear el pedido');
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error('Error creating order:', error);
+    throw error;
+  }
+}
+
+/**
  * Valida la disponibilidad de productos para un pedido
  * @param {Array} items - Lista de productos con sus cantidades
  * @returns {Promise} - Respuesta de la API
