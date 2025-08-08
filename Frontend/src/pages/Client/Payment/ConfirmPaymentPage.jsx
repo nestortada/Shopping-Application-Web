@@ -18,12 +18,40 @@ export default function ConfirmPaymentPage() {
   useEffect(() => {
     async function fetchStatus() {
       try {
-        const res = await fetch(`${BACKEND_URL}${API_URL}/payments/session/${sessionId}`);
-        if (!res.ok) throw new Error('Network response was not ok');
+        // Verificar si tenemos token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No hay token de autenticación');
+          // Guardar la URL actual para redirigir después del login
+          localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+          navigate('/');
+          return;
+        }
+
+        const res = await fetch(`${BACKEND_URL}${API_URL}/payments/session/${sessionId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!res.ok) {
+          if (res.status === 401) {
+            navigate('/');
+            return;
+          }
+          throw new Error('Network response was not ok');
+        }
         const data = await res.json();
         setStatus(data.status);
 
         if (data.status === 'paid') {
+          // Verificar token nuevamente antes de crear la orden
+          const token = localStorage.getItem('token');
+          if (!token) {
+            console.error('Token perdido durante el proceso de pago');
+            navigate('/');
+            return;
+          }
           // Crear el pedido en la base de datos
           const locationId = localStorage.getItem('selectedLocationId') || localStorage.getItem('meson');
           const restaurantName = localStorage.getItem('restaurantName');
