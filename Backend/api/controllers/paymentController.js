@@ -46,7 +46,7 @@ export async function createCheckoutSession(req, res) {
         },
         quantity: item.cantidad
       })),
-      success_url: `${process.env.FRONTEND_URL}/confirm-payment?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.FRONTEND_URL}/client/payment/confirm?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/cart`
     });
 
@@ -91,10 +91,24 @@ export async function stripeWebhook(req, res) {
 export async function getSessionStatus(req, res) {
   const { id } = req.params;
   try {
+    const stripe = getStripeInstance();
     const session = await stripe.checkout.sessions.retrieve(id);
-    res.json({ status: session.payment_status });
+    const paymentIntent = session.payment_intent ? await stripe.paymentIntents.retrieve(session.payment_intent) : null;
+
+    res.json({
+      status: session.payment_status,
+      amount: session.amount_total,
+      currency: session.currency,
+      customer: session.customer,
+      paymentStatus: paymentIntent ? paymentIntent.status : null,
+      error: paymentIntent && paymentIntent.last_payment_error ? paymentIntent.last_payment_error.message : null
+    });
   } catch (error) {
     console.error('Error retrieving session:', error);
-    res.status(500).json({ message: 'Unable to retrieve session' });
+    res.status(500).json({ 
+      status: 'error',
+      message: 'Unable to retrieve session',
+      error: error.message 
+    });
   }
 }
