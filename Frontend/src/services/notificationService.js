@@ -100,6 +100,27 @@ export const setupForegroundNotificationListener = (callback) => {
       console.error('Error setting up foreground notification listener:', error);
     });
 };
+// Notificar nuevo pedido: guarda una notificación en Firestore
+export const notifyNewOrder = async (orderData) => {
+  try {
+    if (!orderData || !orderData.userEmail) throw new Error('orderData o userEmail faltante');
+    const notificationRef = doc(collection(db, 'notifications'));
+    const notification = {
+      type: 'order',
+      title: 'Nuevo pedido',
+      body: `Tienes un nuevo pedido de ${orderData.userEmail}`,
+      userEmail: orderData.userEmail,
+      orderId: orderData.orderId || null,
+      createdAt: new Date(),
+      ...orderData
+    };
+    await setDoc(notificationRef, notification);
+    return true;
+  } catch (error) {
+    console.error('Error notificando nuevo pedido:', error);
+    return false;
+  }
+};
 
 // Play notification sound
 export const playNotificationSound = () => {
