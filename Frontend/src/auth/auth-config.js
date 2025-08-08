@@ -19,10 +19,10 @@ export const msalConfig = {
       postLogoutRedirectUri: window.location.origin + '/',
       navigateToLoginRequestUrl: false,
     },
-    cache: {
-      cacheLocation: 'sessionStorage',
-      storeAuthStateInCookie: false,
-    },
+        cache: {
+            cacheLocation: 'localStorage',
+            storeAuthStateInCookie: false,
+        },
    system: {
        loggerOptions: {
            loggerCallback: (level, message, containsPii) => {
