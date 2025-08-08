@@ -46,8 +46,8 @@ export async function createCheckoutSession(req, res) {
         },
         quantity: item.cantidad
       })),
-      success_url: `${process.env.FRONTEND_URL}/confirm-payment?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL}/cart`
+      success_url: `${process.env.FRONTEND_URLS}/confirm-payment?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URLS}/cart`
     });
 
     res.status(200).json({ sessionId: session.id, url: session.url });
