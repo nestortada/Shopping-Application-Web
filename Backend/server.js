@@ -2,6 +2,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import { createServer } from 'http';
 import { Server } from 'socket.io';

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { db, storage } from '../../../firebase/firebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { auth } from '../../../firebase/firebaseConfig';
+import { getUserProfile } from '../../../services/authService';
 import { useNotifications } from '../../../context/NotificationContext';
 import { successToast, errorToast } from '../../../utils/toastUtils.jsx';
 
@@ -45,17 +45,13 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }) {
     setError('');
 
     try {
-      // Get the user's email to determine the collection
-      const user = auth.currentUser;
-      const userEmail = user ? user.email : null;
-      
-      if (!userEmail || !userEmail.endsWith('@sabanapos.edu.co')) {
+      // Obtener perfil y validar dominio
+      const profile = await getUserProfile();
+      if (!profile.email?.endsWith('@sabanapos.edu.co')) {
         throw new Error('Acceso no autorizado. Esta operación solo puede ser realizada por usuarios POS.');
       }
-      
-      // Extract location name from email (e.g., meson@sabanapos.edu.co -> meson)
-      const locationName = userEmail.split('@')[0].toLowerCase();
-      
+      // Extraer nombre de la ubicación del email (ej: meson@sabanapos.edu.co -> meson)
+      const locationName = profile.email.split('@')[0].toLowerCase();
       // 1. Subir imagen al Storage
       let imageURL = '';
       if (formData.imagen) {

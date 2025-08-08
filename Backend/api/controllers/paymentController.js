@@ -1,6 +1,12 @@
+
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+function getStripeInstance() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('Missing STRIPE_SECRET_KEY environment variable');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+}
 
 export async function getCards(req, res) {
   const userId = req.user.id;
@@ -28,6 +34,7 @@ export async function deleteCard(req, res) {
 export async function createCheckoutSession(req, res) {
   const { cart } = req.body;
   try {
+    const stripe = getStripeInstance();
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
